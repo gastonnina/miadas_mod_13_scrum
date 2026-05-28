@@ -16,6 +16,7 @@ Modulo:
 - [📊 Dataset](#-dataset)
 - [⚙️ Configuracion del entorno](#️-configuracion-del-entorno)
 - [📁 Estructura del repositorio](#-estructura-del-repositorio)
+- [🗺️ Esquema de datos](#️-esquema-de-datos)
 - [🧪 Metodologia de trabajo (resumen)](#-metodologia-de-trabajo-resumen)
 - [🚧 Estado del proyecto](#-estado-del-proyecto)
 
@@ -99,6 +100,11 @@ pip install -e .
 - `app/`: API (FastAPI) y dashboard (Streamlit)
 - `docker/`: contenedores para API y dashboard
 - `scripts/`: automatizaciones de ejecucion
+
+## 🗺️ Esquema de datos
+
+- Archivo DBML local: `docs/dbdiagram/olist_schema.dbml`
+- Vista online del modelo: https://dbdiagram.io/d/M13_G3-6a179a0bb62396d22c8862b8
 
 ## 🧪 Metodologia de trabajo (resumen)
 

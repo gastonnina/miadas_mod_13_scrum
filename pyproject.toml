@@ -16,6 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "missingno",
     "black>=24.0.0",
     "ruff>=0.6.0",
 ]
