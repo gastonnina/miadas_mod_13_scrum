@@ -76,7 +76,7 @@ models/*.onnx
 
 # Temporary generated datasets
 data/interim/*
-data/processed/*
+data/processed/*.csv
 
 # Keep folder structure
 !data/interim/.gitkeep
