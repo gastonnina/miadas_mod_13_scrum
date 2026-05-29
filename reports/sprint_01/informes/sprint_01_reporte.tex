@@ -42,6 +42,16 @@ El e-commerce brasileño Olist funciona como un integrador de múltiples vendedo
 \subsection{Objetivo del MVP}
 El Producto Mínimo Viable (MVP) tiene como objetivo clasificar de forma mensual si un cliente único (\textit{customer\_unique\_id}) pertenece al segmento Premium (\textit{is\_premium = 1}) a partir de su historial inicial de compra, comportamiento de pago e interacciones de servicio. El valor del MVP1 radica en establecer un flujo de preprocesamiento de datos limpio y un baseline técnico robusto sobre el cual iterar algoritmos de mayor capacidad (como Random Forest o XGBoost) en los siguientes sprints.
 
+\subsection{Formulación de Hipótesis Iniciales}
+Con el fin de guiar la exploración analítica y el modelado predictivo, se definieron cinco hipótesis de negocio iniciales que contrastan el comportamiento esperado del cliente premium frente a la base general:
+\begin{itemize}
+    \item \textbf{H1 (Frecuencia):} Los clientes con mayor frecuencia de compra acumulada en la plataforma tienen una probabilidad significativamente mayor de ser catalogados como Premium.
+    \item \textbf{H2 (Calificaciones):} Los clientes con puntuaciones promedio de reseñas más altas muestran una mayor afinidad con la marca y tienden a pertenecer al segmento Premium.
+    \item \textbf{H3 (Recencia):} Los clientes con menor recencia temporal (compras más recientes) poseen una mayor probabilidad de ser Premium.
+    \item \textbf{H4 (Monetario):} Los clientes del segmento Premium presentan tickets promedio unitarios significativamente superiores en comparación con los clientes normales.
+    \item \textbf{H5 (Poder Predictivo RFMT):} Las variables transaccionales de comportamiento temporal y de servicio (RFMT) son suficientes por sí solas para entrenar un clasificador discriminante efectivo de clientes Premium.
+\end{itemize}
+
 \section{Perfilado de Datos Crudos (EDA inicial)}
 El proceso de perfilado de datos crudos involucró la ingesta e inspección de los siete datasets de Olist: clientes, órdenes, pagos, calificaciones (reviews), productos, vendedores e ítems de compra. Se consolidó una dimensión total inicial de 99,441 clientes únicos y 112,650 ítems de compra registrados entre septiembre de 2016 y octubre de 2018 (772 días).
 
@@ -155,14 +165,14 @@ Premium (1) & 0.30 & 0.16 & 0.21 & 5,767 \\
 \end{table}
 
 \subsection{La Paradoja del Target}
-El modelo baseline técnico presenta un rendimiento muy modesto ($ROC-AUC = 0.5355$), apenas superior a una asignación aleatoria. Este resultado confirma empíricamente la \textbf{Paradoja del Target}: el comportamiento de compra de clientes Premium en Olist está determinado por una \textbf{compra única de alto valor} y no por una conducta de alta frecuencia y lealtad temporal. Las variables basadas estrictamente en la frecuencia de pedidos (\texttt{total\_orders}) o el lifetime de relación (\texttt{customer\_lifetime\_days}) son idénticas para el $97\%$ de los clientes (con solo 1 orden), impidiendo la diferenciación estadística usando únicamente RFM tradicional.
+El modelo baseline técnico presenta un rendimiento muy modesto ($ROC-AUC = 0.5355$), apenas superior a una asignación aleatoria. Este resultado confirma empíricamente la \textbf{Paradoja del Target} y contradice la hipótesis de predictibilidad básica \textbf{H5}: el comportamiento de compra de clientes Premium en Olist está determinado por una \textbf{compra única de alto valor} y no por una conducta de alta frecuencia y lealtad temporal. Las variables basadas estrictamente en la frecuencia de pedidos (\texttt{total\_orders}) o el lifetime de relación (\texttt{customer\_lifetime\_days}) son idénticas para el $97\%$ de los clientes (con solo 1 orden), impidiendo la diferenciación estadística usando únicamente RFM tradicional (contradiciendo la hipótesis \textbf{H1}).
 
 \subsection{Métricas y Relaciones de Negocio}
-El análisis descriptivo de segmentos revela valiosas relaciones comerciales:
+El análisis descriptivo de segmentos revela valiosas relaciones comerciales que contrastan nuestras hipótesis iniciales:
 \begin{itemize}
-    \item \textbf{Ticket Medio:} El ticket promedio del cliente Regular es de $93.99\$$ USD, mientras que en el segmento Premium alcanza \textbf{\$416.14 USD} ($4.4$ veces superior).
-    \item \textbf{Satisfacción en Clientes Premium:} Las reseñas promedio de los clientes Premium son sutilmente \textbf{menores} ($4.04$ estrellas) frente a los clientes normales ($4.10$). Esto indica mayor nivel de exigencia y expectativas de servicio.
-    \item \textbf{Retrasos Logísticos:} El porcentaje de entregas con retraso (\texttt{late\_delivery\_rate}) es del \textbf{8.87\%} en el grupo Premium frente al $7.67\%$ en clientes regulares. Esto corrobora que las compras caras involucran productos de mayor tamaño y complejidad de distribución, elevando los retrasos y disminuyendo las calificaciones de reseñas.
+    \item \textbf{Ticket Medio (Validación H4):} El ticket promedio del cliente Regular es de $93.99\$$ USD, mientras que en el segmento Premium alcanza \textbf{\$416.14 USD} ($4.4$ veces superior). Esto valida plenamente la hipótesis \textbf{H4}, confirmando la concentración monetaria del segmento.
+    \item \textbf{Satisfacción en Clientes Premium (Validación H2):} Las reseñas promedio de los clientes Premium son sutilmente \textbf{menores} ($4.04$ estrellas) frente a los clientes normales ($4.10$). Esto contradice la hipótesis de mayor satisfacción \textbf{H2}, revelando que los clientes de alto ticket poseen expectativas superiores y menor tolerancia ante fallas.
+    \item \textbf{Retrasos Logísticos (Validación H3):} El porcentaje de entregas con retraso (\texttt{late\_delivery\_rate}) es del \textbf{8.87\%} en el grupo Premium frente al $7.67\%$ en clientes regulares. Esto contradice la hipótesis logística de priorización \textbf{H3}, lo que corrobora que las compras caras involucran productos de mayor tamaño y complejidad de distribución, elevando los retrasos.
 \end{itemize}
 
 \section{Conclusiones y Próximos Pasos}
