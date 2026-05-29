@@ -62,6 +62,7 @@ El análisis de completitud, visualizado mediante diagramas de barras e matrices
 \centering
 \caption{Valores Faltantes Críticos en Datasets Crudos}
 \label{tab:nulls}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lrr}
 \toprule
 Variable & Registros Nulos & Proporción (\%) \\
@@ -73,7 +74,8 @@ Variable & Registros Nulos & Proporción (\%) \\
 \texttt{product\_category\_name} & 610 & 1.85 \\
 \texttt{order\_approved\_at} & 160 & 0.16 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \subsection{Auditoría de Inconsistencias Temporales}
