@@ -123,7 +123,7 @@ El umbral calculado del percentil 80 se sitúa en \textbf{\$205.18 USD} de factu
 \subsection{Mitigación del Data Leakage}
 Para el entrenamiento del baseline, se excluyeron directamente las variables \texttt{total\_spent} y \texttt{avg\_ticket}, dado que la variable objetivo se calcula a partir del gasto neto. Incluirlas representaría una fuga de datos directa, lo que inflaría el ROC-AUC al $100\%$ sin valor predictivo real.
 
-Las características seleccionadas para el modelado corresponden a variables operacionales y de experiencia: cantidad de órdenes (\texttt{total\_orders}), recencia en días (\texttt{recency\_days}), lifetime del cliente en la plataforma (\texttt{customer\_lifetime\_days}), calificación promedio (\texttt{avg\_review\_score}), indicador binario de reseña ausente (\texttt{review\_is\_missing}), tasa de entregas tardías (\texttt{late\_delivery\_rate}) y cantidad de métodos de pago (\texttt{payment\_methods\_count}).
+Las características seleccionadas para el modelado corresponden a variables operacionales y de experiencia: cantidad de órdenes (\texttt{total\_orders}), recencia en días (\texttt{recency\_days}), lifetime del cliente en la plataforma (\texttt{customer\_lifetime\_days}), calificación promedio (\texttt{avg\_review\_score}), indicador binario de reseña ausente (\texttt{review\_is\_missing}), tasa de entregas tardías (\texttt{late\_delivery\_rate}) y cantidad de métodos de pago (\texttt{payment\_methods\_count}). Para el diseño de estas variables temporales y transaccionales, nos fundamentamos en la metodología RFMT (Recency, Frequency, Monetary, and Time) descrita en \cite{rfmt_methodology}.
 
 \section{Evaluación Experimental y Baseline}
 \subsection{Diseño Experimental Libre de Leakage}
@@ -175,4 +175,14 @@ Para resolver este desafío en el \textbf{Sprint 2}, la estrategia técnica se e
     \item \textbf{Modelos No Lineales:} Entrenar y evaluar Random Forest y XGBoost.
 \end{enumerate}
 
+\begin{thebibliography}{1}
+
+\bibitem{rfmt_methodology}
+A. Ullah, M. I. Mohmand, H. Hussain, S. Johar, I. Khan, S. Ahmad, H. A. Mahmoud, and S. Huda, 
+``Customer Analysis Using Machine Learning-Based Classification Algorithms for Effective Segmentation Using Recency, Frequency, Monetary, and Time,''
+\emph{Sensors}, vol. 23, no. 6, p. 3180, Mar. 2023. [Online]. Available: \url{https://doi.org/10.3390/s23063180}
+
+\end{thebibliography}
+
 \end{document}
+
