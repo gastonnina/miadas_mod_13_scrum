@@ -117,3 +117,20 @@ htmlcov/
 *.swp
 *.swo
 *~
+
+# =========================================================
+# LaTeX
+# =========================================================
+*.aux
+*.log
+*.toc
+*.lof
+*.lot
+*.out
+*.bbl
+*.blg
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+# Descomentar si no se desea incluir el PDF compilado
+# *.pdf

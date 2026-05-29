@@ -1,0 +1,178 @@
+\documentclass[journal,letterpaper]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{microtype}
+
+\begin{document}
+
+\title{Reporte de Sprint 1: Perfilado de Datos Crudos, Exploración y Modelo Baseline para la Identificación de Clientes Premium}
+
+\author{Marcelo de la Quintana,
+        Gaston Nina,
+        y~Gerick Toro\\
+        \textit{Módulo de Implementación de Soluciones de Inteligencia Artificial}\\
+        \textit{Maestría en Inteligencia Artificial y Ciencia de Datos}}
+
+\markboth{INFORME TÉCNICO - SPRINT 1, MAYO 2026}%
+{Sprint 1: Identificación de Clientes Premium}
+
+\maketitle
+
+\begin{abstract}
+Este informe presenta el desarrollo del Sprint 1 para el Caso de Estudio 3 del proyecto analítico aplicado sobre la plataforma de comercio electrónico Olist. El objetivo es diseñar y evaluar un Producto Mínimo Viable (MVP) para la clasificación supervisada de clientes Premium (\textit{is\_premium}). Realizamos un perfilado profundo sobre los siete datasets crudos de Olist, identificando y documentando fallas estructurales e inconsistencias cronológicas en el ciclo de vida de los pedidos. Justificamos empíricamente, mediante análisis de asimetría (\textit{skewness}), la fijación de la variable objetivo en el percentil 80 del gasto acumulado neto del cliente único ($205.18\$$ USD). Por último, entrenamos un modelo baseline de regresión logística libre de fuga de datos (\textit{data leakage}), que arrojó un ROC-AUC de $0.5355$. Este resultado experimental demuestra la denominada ``Paradoja del Target'', caracterizada por compras únicas de alto costo en lugar de recurrencia en el $97\%$ de la base de clientes, sentando las directrices de ingeniería de características para el Sprint 2.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Clientes Premium, Olist, Calidad de Datos, Fuga de Datos, Regresión Logística, Perfilado de Datos.
+\end{IEEEkeywords}
+
+\section{Introducción}
+\IEEEPARstart{L}{a} correcta identificación de clientes de alto valor, comúnmente denominados clientes Premium, es un factor estratégico crucial en la optimización de los ingresos de plataformas de comercio electrónico. Tradicionalmente, las campañas de retención y marketing de fidelización sufren ineficiencias de segmentación al utilizar criterios arbitrarios basados únicamente en promedios transaccionales o en reglas de negocio estáticas que ignoran el perfilamiento temporal.
+
+El presente informe detalla la entrega del \textbf{Sprint 1} para el desarrollo de una solución supervisada de Inteligencia Artificial que predice la pertenencia de un cliente al segmento Premium en Olist. Se abordan la conceptualización del problema de negocio, el análisis descriptivo y perfilado de la calidad física y temporal de los datos crudos, la justificación cuantitativa para la modelación de la variable objetivo, y la evaluación experimental del primer modelo clasificador de referencia (baseline).
+
+\section{Definición del Problema y Objetivo del MVP}
+\subsection{Problema de Negocio y Segmentación}
+El e-commerce brasileño Olist funciona como un integrador de múltiples vendedores locales (\textit{marketplaces}). En este modelo operativo, los clientes de alta facturación y frecuencia representan la mayor fracción del margen bruto de la compañía. Sin embargo, debido a la falta de un scoring predictivo dinámico, la plataforma carece de la habilidad de identificar anticipadamente a aquellos clientes propensos a convertirse en usuarios recurrentes de alto valor, perdiendo oportunidades de venta cruzada y retención personalizada.
+
+\subsection{Objetivo del MVP}
+El Producto Mínimo Viable (MVP) tiene como objetivo clasificar de forma mensual si un cliente único (\textit{customer\_unique\_id}) pertenece al segmento Premium (\textit{is\_premium = 1}) a partir de su historial inicial de compra, comportamiento de pago e interacciones de servicio. El valor del MVP1 radica en establecer un flujo de preprocesamiento de datos limpio y un baseline técnico robusto sobre el cual iterar algoritmos de mayor capacidad (como Random Forest o XGBoost) en los siguientes sprints.
+
+\section{Perfilado de Datos Crudos (EDA inicial)}
+El proceso de perfilado de datos crudos involucró la ingesta e inspección de los siete datasets de Olist: clientes, órdenes, pagos, calificaciones (reviews), productos, vendedores e ítems de compra. Se consolidó una dimensión total inicial de 99,441 clientes únicos y 112,650 ítems de compra registrados entre septiembre de 2016 y octubre de 2018 (772 días).
+
+\subsection{Verificación de Valores Faltantes}
+El análisis de completitud, visualizado mediante diagramas de barras e matrices de distribución de nulos, arrojó nulos lógicos únicamente en variables operacionales y subjetivas de los pedidos y reseñas. En la Tabla~\ref{tab:nulls} se describen los nulos clave analizados.
+
+\begin{table}[h]
+\centering
+\caption{Valores Faltantes Críticos en Datasets Crudos}
+\label{tab:nulls}
+\begin{tabular}{lrr}
+\toprule
+Variable & Registros Nulos & Proporción (\%) \\
+\midrule
+\texttt{review\_comment\_title} & 87,656 & 88.34 \\
+\texttt{review\_comment\_message} & 58,247 & 58.70 \\
+\texttt{order\_delivered\_customer\_date} & 2,965 & 2.98 \\
+\texttt{order\_delivered\_carrier\_date} & 1,783 & 1.79 \\
+\texttt{product\_category\_name} & 610 & 1.85 \\
+\texttt{order\_approved\_at} & 160 & 0.16 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Auditoría de Inconsistencias Temporales}
+Un aporte crucial del análisis de perfilado de calidad de datos fue la validación de coherencia lógica cronológica en el ciclo de vida del pedido. Mediante pruebas de consistencia en el dataset \texttt{orders}, se identificaron fallas físicas en los logs del sistema origen:
+\begin{itemize}
+    \item \textbf{Carrier antes de compra:} 166 pedidos tienen fecha de recogida del transportista (\texttt{order\_delivered\_carrier\_date}) registrada como anterior a la fecha de compra del pedido.
+    \item \textbf{Carrier antes de aprobación:} 1,359 registros reportan envío al transportista antes de la aprobación del pago (\texttt{order\_approved\_at}).
+    \item \textbf{Entrega al cliente antes que el transportista:} 23 órdenes figuran como recibidas por el cliente antes de ingresar al sistema logístico de transporte.
+    \item \textbf{Entrega al cliente antes de aprobación:} 61 órdenes reportan recepción definitiva por parte del usuario final antes de que el pago del pedido fuese aprobado.
+\end{itemize}
+
+\subsection{Distribución de Estados de Pedidos}
+El ciclo de vida de los pedidos se analizó cuantitativamente. Como se muestra en la Tabla~\ref{tab:status}, el $97.02\%$ de las compras registradas logran el estado final de entregado (\texttt{delivered}).
+
+\begin{table}[h]
+\centering
+\caption{Distribución del Estado de las Órdenes}
+\label{tab:status}
+\begin{tabular}{lrr}
+\toprule
+Estado & Frecuencia & Proporción (\%) \\
+\midrule
+\texttt{delivered} & 96,478 & 97.020 \\
+\texttt{shipped} & 1,107 & 1.113 \\
+\texttt{canceled} & 625 & 0.628 \\
+\texttt{unavailable} & 609 & 0.612 \\
+\texttt{invoiced} & 314 & 0.315 \\
+\texttt{processing} & 301 & 0.302 \\
+\texttt{created} & 5 & 0.005 \\
+\texttt{approved} & 2 & 0.002 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Análisis de Asimetría Financiera}
+Las variables transaccionales de precios y costos de fletes de los artículos muestran distribuciones de cola larga fuertemente sesgadas hacia la derecha. Al evaluar su asimetría matemática (\textit{skewness}), se confirmaron valores críticos:
+\begin{itemize}
+    \item \textbf{Asimetría de Precios:} $7.9231$
+    \item \textbf{Asimetría de Fletes:} $5.6398$
+\end{itemize}
+Este comportamiento de asimetría extrema (mayor a $7.0$) fundamenta empíricamente que el uso de promedios simples para definir el corte del segmento Premium distorsionaría el análisis debido al impacto de valores atípicos. Esto justifica el empleo de percentiles robustos sobre el gasto acumulado neto del cliente único.
+
+\section{Justificación de Variables y Target}
+\subsection{Consolidación a nivel Cliente Único}
+La Master Table consolidada se agrupó al nivel del identificador único de cliente (\texttt{customer\_unique\_id}) en lugar de usar \texttt{customer\_id} (asociado a cada pedido individual). La unificación geográfica de estados y códigos postales se resolvió seleccionando el registro más reciente para cada usuario, evitando duplicidad e infrecuencias.
+
+\subsection{Definición de Variable Objetivo}
+El target preliminar se define como:
+\begin{equation}
+is\_premium = \begin{cases} 
+1 & \text{si } total\_spent \geq \text{Percentil 80} \\
+0 & \text{en caso contrario}
+\end{cases}
+\end{equation}
+El umbral calculado del percentil 80 se sitúa en \textbf{\$205.18 USD} de facturación neta real. Esto segmenta de forma balanceada al $20.003\%$ ($19,222$ clientes) como Premium y al $79.997\%$ ($76,874$ clientes) como Regulares.
+
+\subsection{Mitigación del Data Leakage}
+Para el entrenamiento del baseline, se excluyeron directamente las variables \texttt{total\_spent} y \texttt{avg\_ticket}, dado que la variable objetivo se calcula a partir del gasto neto. Incluirlas representaría una fuga de datos directa, lo que inflaría el ROC-AUC al $100\%$ sin valor predictivo real.
+
+Las características seleccionadas para el modelado corresponden a variables operacionales y de experiencia: cantidad de órdenes (\texttt{total\_orders}), recencia en días (\texttt{recency\_days}), lifetime del cliente en la plataforma (\texttt{customer\_lifetime\_days}), calificación promedio (\texttt{avg\_review\_score}), indicador binario de reseña ausente (\texttt{review\_is\_missing}), tasa de entregas tardías (\texttt{late\_delivery\_rate}) y cantidad de métodos de pago (\texttt{payment\_methods\_count}).
+
+\section{Evaluación Experimental y Baseline}
+\subsection{Diseño Experimental Libre de Leakage}
+Para evitar fuga de información en el proceso de preprocesamiento, se implementó el siguiente pipeline secuencial:
+\begin{enumerate}
+    \item División en conjunto de entrenamiento ($70\%$) y prueba ($30\%$).
+    \item Cálculo de la media del score de reseñas únicamente en entrenamiento ($\sim 4.08$) para imputar valores nulos de forma neutral en ambos conjuntos.
+    \item Imputación por mediana para variables operacionales basándose exclusivamente en el conjunto de entrenamiento.
+    \item Ajuste del escalador \texttt{StandardScaler} sobre entrenamiento y posterior transformación a prueba.
+\end{enumerate}
+
+\subsection{Resultados y Reporte de Clasificación}
+Se entrenó una regresión logística simple con ponderación de clase balanceada para contrarrestar el desbalance de clases del target ($80/20$). Las métricas resultantes sobre el test set ($28,829$ clientes) se resumen en la Tabla~\ref{tab:metrics}.
+
+\begin{table}[h]
+\centering
+\caption{Reporte de Clasificación del Baseline}
+\label{tab:metrics}
+\begin{tabular}{lrrrr}
+\toprule
+Clase & Precision & Recall & F1-Score & Soporte \\
+\midrule
+Regular (0) & 0.81 & 0.91 & 0.86 & 23,062 \\
+Premium (1) & 0.30 & 0.16 & 0.21 & 5,767 \\
+\midrule
+\textbf{ROC-AUC} & & & \textbf{0.5355} & 28,829 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{La Paradoja del Target}
+El modelo baseline técnico presenta un rendimiento muy modesto ($ROC-AUC = 0.5355$), apenas superior a una asignación aleatoria. Este resultado confirma empíricamente la \textbf{Paradoja del Target}: el comportamiento de compra de clientes Premium en Olist está determinado por una \textbf{compra única de alto valor} y no por una conducta de alta frecuencia y lealtad temporal. Las variables basadas estrictamente en la frecuencia de pedidos (\texttt{total\_orders}) o el lifetime de relación (\texttt{customer\_lifetime\_days}) son idénticas para el $97\%$ de los clientes (con solo 1 orden), impidiendo la diferenciación estadística usando únicamente RFM tradicional.
+
+\subsection{Métricas y Relaciones de Negocio}
+El análisis descriptivo de segmentos revela valiosas relaciones comerciales:
+\begin{itemize}
+    \item \textbf{Ticket Medio:} El ticket promedio del cliente Regular es de $93.99\$$ USD, mientras que en el segmento Premium alcanza \textbf{\$416.14 USD} ($4.4$ veces superior).
+    \item \textbf{Satisfacción en Clientes Premium:} Las reseñas promedio de los clientes Premium son sutilmente \textbf{menores} ($4.04$ estrellas) frente a los clientes normales ($4.10$). Esto indica mayor nivel de exigencia y expectativas de servicio.
+    \item \textbf{Retrasos Logísticos:} El porcentaje de entregas con retraso (\texttt{late\_delivery\_rate}) es del \textbf{8.87\%} en el grupo Premium frente al $7.67\%$ en clientes regulares. Esto corrobora que las compras caras involucran productos de mayor tamaño y complejidad de distribución, elevando los retrasos y disminuyendo las calificaciones de reseñas.
+\end{itemize}
+
+\section{Conclusiones y Próximos Pasos}
+La culminación del Sprint 1 certifica la viabilidad inicial del proyecto. El análisis descriptivo evidenció que el modelado tradicional de comportamiento transaccional es insuficiente para clasificar clientes Premium dado el bajo volumen de recompras de la plataforma.
+
+Para resolver este desafío en el \textbf{Sprint 2}, la estrategia técnica se enfocará en:
+\begin{enumerate}
+    \item \textbf{Características de Categoría:} Extraer el tipo de producto (tecnología, computación y muebles concentran el gasto) e incorporarlo al modelo.
+    \item \textbf{Features de Financiamiento:} Codificar el método de pago (\texttt{main\_payment\_type}) y la cantidad de cuotas (\texttt{payment\_installments}).
+    \item \textbf{Modelos No Lineales:} Entrenar y evaluar Random Forest y XGBoost.
+\end{enumerate}
+
+\end{document}
