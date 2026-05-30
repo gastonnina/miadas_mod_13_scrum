@@ -124,7 +124,10 @@ Sprint 4 (`integracion y demo`):
 
 ## 🚀 Scripts de ejecucion
 
-- `scripts/csv_to_parquet.py`: conversion de datos raw CSV a Parquet.
+Los scripts del proyecto cubren preparacion de datos, particionado temporal.
+
+Para detalle de uso, orden por etapas y parametros:
+[scripts/README.md](scripts/README.md)
 
 ## 🗺️ Esquema de datos
 
