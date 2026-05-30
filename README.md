@@ -111,6 +111,7 @@ Sprint 1 (`EDA + baseline`):
 - Hipotesis, target y metricas: [reports/sprint_01/documento_hipotesis_target_metricas.md](reports/sprint_01/documento_hipotesis_target_metricas.md)
 - Storytelling breve: [reports/sprint_01/storytelling_breve.md](reports/sprint_01/storytelling_breve.md)
 - Reporte Sprint 1 (PDF): [reports/sprint_01/informes/sprint_01_reporte.pdf](reports/sprint_01/informes/sprint_01_reporte.pdf)
+- Presentacion final Sprint 1 (PDF): [reports/sprint_01/informes/sprint_01_presentacion.pdf](reports/sprint_01/informes/sprint_01_presentacion.pdf)
 
 Sprint 2 (`pipeline de features`):
 - Estado: `Pendiente`
