@@ -49,6 +49,7 @@ ENV/
 # =========================================================
 .vscode/
 .idea/
+.codex/
 
 # =========================================================
 # macOS / Linux
@@ -137,3 +138,6 @@ htmlcov/
 
 # PDFs generados de notebooks EDA Sprint 01
 notebooks/sprint_01_eda/*.pdf
+
+# Plan markdown files (case variants)
+*[Pp][Ll][Aa][Nn]*.md
