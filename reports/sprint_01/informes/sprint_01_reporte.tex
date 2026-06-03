@@ -6,6 +6,7 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{microtype}
+\graphicspath{{figures/}}
 
 \begin{document}
 
@@ -118,6 +119,15 @@ Las variables transaccionales de precios y costos de fletes de los artículos mu
 \end{itemize}
 Este comportamiento de asimetría extrema (mayor a $7.0$) fundamenta empíricamente que el uso de promedios simples para definir el corte del segmento Premium distorsionaría el análisis debido al impacto de valores atípicos. Esto justifica el empleo de percentiles robustos sobre el gasto acumulado neto del cliente único.
 
+La Figura~\ref{fig:long_tail} ilustra la distribución del gasto acumulado por cliente, donde se aprecia la marcada cola derecha y la posición del umbral del Percentil 80 (\$205.18 USD) que define la variable objetivo.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\columnwidth]{fig_long_tail.png}
+  \caption{Distribución del gasto acumulado neto por cliente. La línea discontinua indica el umbral del Percentil 80 (\$205.18 USD), adoptado como corte para \textit{is\_premium} dado el sesgo extremo de la distribución (skewness $= 7.92$).}
+  \label{fig:long_tail}
+\end{figure}
+
 \section{Justificación de Variables y Target}
 \subsection{Consolidación a nivel Cliente Único}
 La Master Table consolidada se agrupó al nivel del identificador único de cliente (\texttt{customer\_unique\_id}) en lugar de usar \texttt{customer\_id} (asociado a cada pedido individual). La unificación geográfica de estados y códigos postales se resolvió seleccionando el registro más reciente para cada usuario, evitando duplicidad e infrecuencias.
@@ -165,6 +175,16 @@ Premium (1) & 0.30 & 0.16 & 0.21 & 5,767 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\subsection{Curva ROC del Modelo Baseline}
+La Figura~\ref{fig:roc} presenta la curva ROC del modelo de regresión logística entrenado. Se puede observar que la curva se aleja apenas del clasificador aleatorio, coherente con el valor de $\text{ROC-AUC} = 0.5355$ reportado en la Tabla~\ref{tab:metrics}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\columnwidth]{fig_roc_baseline.png}
+  \caption{Curva ROC del modelo baseline (regresión logística con clase balanceada). El área bajo la curva ($\text{AUC} = 0.5355$) es marginalmente superior al clasificador aleatorio, evidenciando la insuficiencia de las variables RFMT tradicionales para discriminar el segmento Premium.}
+  \label{fig:roc}
+\end{figure}
 
 \subsection{La Paradoja del Target}
 El modelo baseline técnico presenta un rendimiento muy modesto ($ROC-AUC = 0.5355$), apenas superior a una asignación aleatoria. Este resultado confirma empíricamente la \textbf{Paradoja del Target} y contradice la hipótesis de predictibilidad básica \textbf{H5}: el comportamiento de compra de clientes Premium en Olist está determinado por una \textbf{compra única de alto valor} y no por una conducta de alta frecuencia y lealtad temporal. Las variables basadas estrictamente en la frecuencia de pedidos (\texttt{total\_orders}) o el lifetime de relación (\texttt{customer\_lifetime\_days}) son idénticas para el $97\%$ de los clientes (con solo 1 orden), impidiendo la diferenciación estadística usando únicamente RFM tradicional (contradiciendo la hipótesis \textbf{H1}).

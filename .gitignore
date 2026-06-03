@@ -134,3 +134,6 @@ htmlcov/
 *.fls
 # Descomentar si no se desea incluir el PDF compilado
 # *.pdf
+
+# PDFs generados de notebooks EDA Sprint 01
+notebooks/sprint_01_eda/*.pdf
