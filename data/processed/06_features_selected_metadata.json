@@ -1,0 +1,71 @@
+{
+  "rows": 96096,
+  "selected_feature_count": 28,
+  "identifier_columns": [
+    "customer_unique_id"
+  ],
+  "target_columns": [
+    "is_premium"
+  ],
+  "selected_model_columns": [
+    "total_orders",
+    "total_products",
+    "avg_review_score",
+    "avg_delivery_days",
+    "avg_estimated_delivery_days",
+    "payment_methods_count",
+    "max_payment_installments",
+    "avg_freight_value",
+    "avg_freight_ratio",
+    "recency_days",
+    "customer_lifetime_days",
+    "cancellation_rate",
+    "late_delivery_rate",
+    "items_per_order",
+    "products_per_order",
+    "max_to_avg_price_ratio",
+    "freight_to_item_ratio",
+    "installments_gt_1_flag",
+    "installments_gt_6_flag",
+    "credit_card_flag",
+    "boleto_flag",
+    "voucher_flag",
+    "delivery_gap",
+    "reviews_per_order",
+    "region_group",
+    "far_region_flag",
+    "top_category_group",
+    "top_category_is_high_value"
+  ],
+  "excluded_leakage_columns": [
+    "total_spent",
+    "avg_ticket",
+    "avg_order_price"
+  ],
+  "analysis_only_columns": [
+    "first_purchase",
+    "last_purchase",
+    "customer_city",
+    "customer_zip_code_prefix",
+    "customer_state",
+    "main_payment_type",
+    "top_category",
+    "avg_item_price",
+    "max_item_price",
+    "total_items",
+    "total_reviews",
+    "delivered_orders",
+    "canceled_orders",
+    "late_deliveries",
+    "avg_payment_installments",
+    "payment_complexity_flag",
+    "has_late_delivery",
+    "has_cancellation"
+  ],
+  "other_excluded_columns": [],
+  "selection_rationale": {
+    "model": "Variables operativas, logisticas, de cuotas, composicion y geografia agregada con se\u00f1al util y menor riesgo de leakage directo.",
+    "analysis_only": "Variables utiles para EDA, interpretacion o futuras discusiones, pero no incluidas en esta primera seleccion del modelo.",
+    "leakage": "Variables demasiado cercanas a la definicion del target por gasto acumulado o ticket."
+  }
+}
