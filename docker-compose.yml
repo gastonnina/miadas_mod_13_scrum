@@ -1,0 +1,56 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Olist Premium-Customer Pipeline
+#
+# Services
+# ─────────
+# pipeline      One-shot run (use `docker compose run pipeline` to trigger manually)
+# pipeline-cron Runs the pipeline on a cron schedule (default: every 3 months)
+#
+# Usage
+# ─────
+# Full rebuild (ignores checkpoint):
+#   docker compose run pipeline python -m scripts.pipeline --full
+#
+# Incremental run (skips if nothing new):
+#   docker compose run pipeline
+#
+# Start the scheduler:
+#   docker compose up pipeline-cron
+#
+# Change the schedule (every month):
+#   PIPELINE_CRON="0 2 1 * *" docker compose up pipeline-cron
+# ─────────────────────────────────────────────────────────────────────────────
+
+x-pipeline-base: &pipeline-base
+  build:
+    context: .
+    dockerfile: Dockerfile
+  environment:
+    PROJECT_ROOT: /app
+    RAW_DIR: /app/data/raw
+    PROCESSED_DIR: /app/data/processed
+    PIPELINE_STATE_FILE: /app/pipeline_state.json
+  volumes:
+    - ./data/raw:/app/data/raw:ro
+    - ./data/processed:/app/data/processed
+    # Mount checkpoint file so state persists across container restarts
+    - ./notebooks/sprint_02_pipeline/pipeline_state.json:/app/pipeline_state.json
+
+services:
+  # ── One-shot pipeline runner ──────────────────────────────────────────────
+  pipeline:
+    <<: *pipeline-base
+    command: ["python", "-m", "scripts.pipeline"]
+
+  # ── Scheduled runner (cron inside container) ──────────────────────────────
+  pipeline-cron:
+    <<: *pipeline-base
+    # Override cron schedule via PIPELINE_CRON env var (default: every 3 months)
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PIPELINE_CRON: "${PIPELINE_CRON:-0 2 1 1,4,7,10 *}"
+    restart: unless-stopped
