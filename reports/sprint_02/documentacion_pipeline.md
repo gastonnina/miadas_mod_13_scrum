@@ -18,6 +18,34 @@ Split dev / raw
 -> features seleccionadas
 ```
 
+El DAG tecnico completo esta documentado en `reports/sprint_02/dag_pipeline_sprint_2.md`.
+
+## DAG resumido
+
+```mermaid
+flowchart TD
+    A[Fuentes dev/raw] --> B[Master table]
+    B --> C[Features Sprint 2]
+    C --> D[Seleccion experimental]
+    D --> E[Evaluacion vs baseline]
+    E --> F[Notebook integrador]
+    F --> G[Documentacion final]
+
+    B -.-> B1[03_master_table_clean + threshold]
+    C -.-> C1[05_features_rfm]
+    D -.-> D1[06_features_selected]
+    E -.-> E1[08_evaluation_metrics]
+```
+
+## Orden de ejecucion
+
+```bash
+python3 src/data/build_master_table.py --profile-source dev --threshold-mode auto
+python3 src/features/build_rfm_features.py
+python3 src/features/feature_selection_experiments.py
+python3 src/models/evaluate_model.py
+```
+
 ## Artefactos generados
 
 - `data/interim/01_master_table_raw_sprint2.parquet`
@@ -30,6 +58,11 @@ Split dev / raw
 - `data/processed/06_feature_selection_experiments.parquet`
 - `data/processed/06_feature_selection_experiments.json`
 - `data/processed/06_features_selected.parquet`
+- `data/processed/06_features_selected_metadata.json`
+- `data/processed/08_evaluation_metrics.json`
+- `reports/sprint_02/dag_pipeline_sprint_2.md`
+- `reports/sprint_02/evaluation_vs_baseline.md`
+- `reports/sprint_02/feature_selection_experiments.md`
 
 ## Construccion de la master table
 
@@ -80,6 +113,12 @@ Features nuevas creadas:
 - `far_region_flag`
 - `top_category_group`
 - `top_category_is_high_value`
+
+Nota sobre `top_category_is_high_value`:
+
+- esta feature no usa la tasa premium de la categoria
+- se define con el cuartil superior de `avg_item_price` por categoria
+- la decision evita introducir leakage del target en la construccion de features
 
 ## Seleccion de variables
 
@@ -352,6 +391,17 @@ Conclusion metodologica:
 - el target final del Sprint 2 queda confirmado
 - la politica de leakage queda explicitada y aplicada de forma reproducible
 - el set final de `28` features es consistente con esa politica y produce mejora real frente al baseline sin depender de proxies monetarias directas
+
+## Alcance y siguiente mejora metodologica
+
+El alcance de Sprint 2 es construir un pipeline reproducible de segmentacion y modelado historico de clientes premium. El split temporal `train/validation` permite validar estabilidad reciente, pero las features y el target todavia se construyen sobre la historia agregada disponible del cliente.
+
+Para una prediccion temprana de clientes que seran premium en una ventana futura, el siguiente paso seria separar:
+
+- ventana de observacion para construir features
+- ventana futura de outcome para etiquetar `is_premium`
+
+Esa separacion queda como mejora metodologica natural para Sprint 3.
 
 ## Versionamiento
 

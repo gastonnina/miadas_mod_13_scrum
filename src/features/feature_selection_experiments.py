@@ -281,7 +281,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--metadata-path", type=Path, default=None)
     parser.add_argument("--summary-path", type=Path, default=None)
     parser.add_argument("--selected-output-path", type=Path, default=None)
-    parser.add_argument("--validation-cutoff", type=str, default="2018-08-01")
+    parser.add_argument("--selected-metadata-path", type=Path, default=None)
+    parser.add_argument("--validation-cutoff", type=str, default="2018-07-01")
     parser.add_argument("--max-train-rows", type=int, default=30000)
     return parser.parse_args()
 
@@ -294,6 +295,7 @@ def main() -> None:
     metadata_path = args.metadata_path or (project_root / "data" / "processed" / "06_feature_selection_experiments.json")
     summary_path = args.summary_path or (project_root / "reports" / "sprint_02" / "feature_selection_experiments.md")
     selected_output_path = args.selected_output_path or (project_root / "data" / "processed" / "06_features_selected.parquet")
+    selected_metadata_path = args.selected_metadata_path or (project_root / "data" / "processed" / "06_features_selected_metadata.json")
 
     df = pd.read_parquet(input_path).copy()
     cutoff = pd.Timestamp(args.validation_cutoff)
@@ -334,9 +336,25 @@ def main() -> None:
     }
     metadata_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
+    selected_payload = {
+        "source": "src/features/feature_selection_experiments.py",
+        "selection_type": "experimental",
+        "input_path": str(input_path),
+        "selected_output_path": str(selected_output_path),
+        "validation_cutoff": args.validation_cutoff,
+        "max_train_rows": args.max_train_rows,
+        "best_experiment": best_experiment,
+        "selected_feature_count": len(best_features),
+        "selected_model_columns": best_features,
+        "mandatory_exclude": MANDATORY_EXCLUDE,
+        "selection_rule": "Best validation AUC within 0.002 tolerance, then fewer features and lower overfit gap.",
+    }
+    selected_metadata_path.write_text(json.dumps(selected_payload, indent=2), encoding="utf-8")
+
     print(f"Input path: {input_path}")
     print(f"Results path: {results_path}")
     print(f"Selected output path: {selected_output_path}")
+    print(f"Selected metadata path: {selected_metadata_path}")
     print(f"Summary path: {summary_path}")
     print(f"Best experiment: {best_experiment}")
     print(f"Best feature count: {len(best_features)}")

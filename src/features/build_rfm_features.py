@@ -26,7 +26,7 @@ FEATURE_DESCRIPTIONS = {
     "region_group": "Agrupacion geografica por region de Brasil.",
     "far_region_flag": "Indica region alejada con mayor costo logistico potencial.",
     "top_category_group": "Agrupacion de categoria principal del cliente.",
-    "top_category_is_high_value": "Indica si la categoria principal tiene alta tasa premium.",
+    "top_category_is_high_value": "Indica si la categoria principal pertenece al cuartil superior de precio promedio por categoria.",
 }
 
 REGION_BY_STATE = {

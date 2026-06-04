@@ -114,7 +114,12 @@ Sprint 1 (`EDA + baseline`):
 - Presentacion final Sprint 1 (PDF): [reports/sprint_01/informes/sprint_01_presentacion.pdf](reports/sprint_01/informes/sprint_01_presentacion.pdf)
 
 Sprint 2 (`pipeline de features`):
-- Estado: `Pendiente`
+- Estado: `Completado`
+- Plan y checklist: [reports/sprint_02/plan_implementacion_sprint_2.md](reports/sprint_02/plan_implementacion_sprint_2.md)
+- DAG tecnico reproducible: [reports/sprint_02/dag_pipeline_sprint_2.md](reports/sprint_02/dag_pipeline_sprint_2.md)
+- Documentacion del pipeline: [reports/sprint_02/documentacion_pipeline.md](reports/sprint_02/documentacion_pipeline.md)
+- Notebook integrador: [notebooks/sprint_02_pipeline/02_pipeline_features.ipynb](notebooks/sprint_02_pipeline/02_pipeline_features.ipynb)
+- Evaluacion vs baseline: [reports/sprint_02/evaluation_vs_baseline.md](reports/sprint_02/evaluation_vs_baseline.md)
 
 Sprint 3 (`modelado y comparacion`):
 - Estado: `Pendiente`
@@ -144,5 +149,5 @@ Para detalle de uso, orden por etapas y parametros:
 ## 🚧 Estado del proyecto
 
 En desarrollo academico por sprints.
-Estado actual: **Sprint 1** (definicion del problema, EDA inicial,
-master table y baseline logistico).
+Estado actual: **Sprint 2 completado** (pipeline reproducible,
+features, seleccion experimental, metricas y KPIs finales).

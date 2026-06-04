@@ -117,11 +117,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input-path", type=Path, default=None)
     parser.add_argument("--output-path", type=Path, default=None)
     parser.add_argument("--metadata-path", type=Path, default=None)
+    parser.add_argument(
+        "--allow-manual-selection",
+        action="store_true",
+        help="Permite ejecutar la seleccion manual historica. El flujo oficial usa feature_selection_experiments.py.",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    if not args.allow_manual_selection:
+        raise SystemExit(
+            "select_features.py esta deprecado para el flujo final del Sprint 2. "
+            "Usa src/features/feature_selection_experiments.py o agrega --allow-manual-selection si necesitas reproducir la seleccion manual historica."
+        )
     project_root = resolve_project_root()
     input_path = args.input_path or (project_root / "data" / "processed" / "05_features_rfm.parquet")
     output_path = args.output_path or (project_root / "data" / "processed" / "06_features_selected.parquet")
