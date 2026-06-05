@@ -1,0 +1,1326 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <title>Olist Premium Customers | Sprint 1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reset.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/simple.min.css">
+
+  <style>
+    :root {
+      --olist-blue: #043fbe;
+      --olist-blue-2: #0a4ee4;
+      --olist-dark: #06266f;
+      --olist-soft: #e7edf8;
+      --olist-line: #d6dff5;
+      --paper: #fbfcff;
+      --ink: #10245c;
+      --muted: #5c6d91;
+      --orange: #ff7a00;
+      --red: #d92d20;
+      --green: #12b76a;
+      --r-background-color: var(--paper);
+      --r-main-color: var(--ink);
+      --r-heading-color: var(--olist-dark);
+      --r-link-color: var(--olist-blue);
+    }
+
+    /* Clean, crisp rendering and subpixel antialiasing */
+    .reveal,
+    .reveal * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    .reveal {
+      font-family: "Nunito Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+
+    /* Strict 16:9 widescreen sizing & sharp transitions */
+    .reveal .slides {
+      transform-style: preserve-3d;
+    }
+
+    .reveal .slides section {
+      width: 1280px !important;
+      height: 720px !important;
+      padding: 0 !important;
+      text-align: left;
+      box-sizing: border-box;
+      top: 0 !important;
+      left: 0 !important;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+    }
+
+    .slide-shell {
+      width: 1280px;
+      height: 720px;
+      padding: 24px 50px 24px;
+      display: grid;
+      grid-template-rows: 50px minmax(0, 1fr) 20px;
+      gap: 12px;
+      box-sizing: border-box;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 50px;
+    }
+
+    .brand-pill {
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(251, 252, 255, .92);
+      border: 1px solid rgba(214, 223, 245, .95);
+      box-shadow: 0 10px 28px rgba(4, 63, 190, .08);
+      color: var(--olist-dark);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .logo-olist {
+      height: 24px;
+      width: auto;
+    }
+
+    .logo-umsa {
+      height: 30px;
+      width: auto;
+    }
+
+    .divider {
+      width: 1px;
+      height: 24px;
+      background: var(--olist-line);
+    }
+
+    .content {
+      min-height: 0;
+      display: grid;
+      align-content: stretch;
+      gap: 14px;
+    }
+
+    .kicker {
+      margin: 0 0 4px;
+      color: var(--olist-blue);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .reveal h1,
+    .reveal h2,
+    .reveal h3,
+    .reveal p {
+      margin: 0;
+      text-transform: none;
+    }
+
+    .reveal h1 {
+      max-width: 1010px;
+      font-size: 46px;
+      line-height: 1.05;
+      letter-spacing: -.05em;
+      font-weight: 900;
+      color: var(--olist-dark);
+    }
+
+    .reveal h2 {
+      max-width: 960px;
+      font-size: 32px;
+      line-height: 1.1;
+      letter-spacing: -.04em;
+      font-weight: 880;
+      color: var(--olist-dark);
+    }
+
+    .reveal h3 {
+      font-size: 19px;
+      line-height: 1.15;
+      letter-spacing: -.02em;
+      font-weight: 840;
+      color: var(--olist-dark);
+    }
+
+    .lead {
+      max-width: 880px;
+      color: #dce6ff;
+      font-size: 20px;
+      line-height: 1.36;
+      margin-top: 10px;
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dark .kicker,
+    .dark .footer,
+    .dark .lead {
+      color: #dce6ff;
+    }
+
+    .dark h1,
+    .dark h2,
+    .dark h3 {
+      color: #f8fbff;
+    }
+
+    .dark {
+      color: #f8fbff;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, .90);
+      border: 1.5px solid var(--olist-line);
+      border-radius: 20px;
+      padding: 18px 22px;
+      box-shadow: 0 12px 34px rgba(4, 63, 190, .06);
+      box-sizing: border-box;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+    }
+
+    .dark .card {
+      color: #f8fbff;
+      background: rgba(231, 237, 248, .10);
+      border-color: rgba(231, 237, 248, .22);
+      box-shadow: none;
+    }
+
+    .card p {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.32;
+    }
+
+    .dark .card p {
+      color: #dce6ff;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-bottom: 8px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--olist-soft);
+      border: 1px solid var(--olist-line);
+      color: var(--olist-blue);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .tag.orange {
+      background: #fff2e5;
+      border-color: #ffd2a8;
+      color: #a94700;
+    }
+
+    .tag.red {
+      background: #fff0ed;
+      border-color: #ffd4cc;
+      color: #a11f18;
+    }
+
+    .tag.green {
+      background: #ecfdf3;
+      border-color: #abefc6;
+      color: #067647;
+    }
+
+    .metric {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--olist-blue);
+      font-size: 54px;
+      line-height: .9;
+      letter-spacing: -.05em;
+      font-weight: 900;
+    }
+
+    .metric.orange {
+      color: var(--orange);
+    }
+
+    .metric.red {
+      color: var(--red);
+    }
+
+    .dark .metric {
+      color: #f8fbff;
+    }
+
+    .figure {
+      background: rgba(255, 255, 255, .94);
+      border: 1.5px solid var(--olist-line);
+      border-radius: 20px;
+      padding: 12px;
+      box-shadow: 0 14px 36px rgba(4, 63, 190, .08);
+      box-sizing: border-box;
+      display: block;
+      min-height: 0;
+      height: 100%;
+      position: relative;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+    }
+
+    .quote-card {
+      padding: 24px;
+      border-radius: 20px;
+      background: var(--olist-dark);
+      color: #f8fbff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-sizing: border-box;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+    }
+
+    .quote-card p {
+      color: #dce6ff;
+      font-size: 20px;
+      line-height: 1.34;
+      letter-spacing: -.02em;
+    }
+
+    .roles {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 900px;
+    }
+
+    .role {
+      padding-top: 10px;
+      border-top: 1.5px solid rgba(231, 237, 248, .30);
+    }
+
+    .role strong {
+      display: block;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .role span {
+      display: block;
+      margin-top: 4px;
+      color: #dce6ff;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      min-height: 160px;
+    }
+
+    .step {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .90);
+      border: 1.5px solid var(--olist-line);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-sizing: border-box;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+    }
+
+    .step b {
+      display: block;
+      color: var(--olist-blue);
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .step span {
+      display: block;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.22;
+      font-weight: 750;
+    }
+
+    .callout {
+      padding: 16px 22px;
+      border-radius: 18px;
+      background: var(--olist-soft);
+      border: 1.5px solid var(--olist-line);
+      color: var(--ink);
+      font-size: 17px;
+      line-height: 1.32;
+      font-weight: 650;
+      box-sizing: border-box;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--olist-dark);
+      background: var(--olist-soft);
+      padding: 1px 5px;
+      border-radius: 5px;
+      font-size: .9em;
+    }
+
+    .compact-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .compact-list .card {
+      padding: 12px 18px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(4, 63, 190, .04);
+    }
+
+    .compact-list .card h3 {
+      font-size: 17px;
+      line-height: 1.1;
+      margin-bottom: 2px;
+    }
+
+    .compact-list .card p {
+      margin-top: 4px;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    .compact-list .card .tag {
+      margin-bottom: 6px;
+      padding: 3px 8px;
+      font-size: 9px;
+    }
+
+    .story-title h1,
+    .story-title h2 {
+      font-family: "Nunito Sans", ui-sans-serif;
+      font-weight: 850;
+      letter-spacing: -.04em;
+    }
+
+    .hero-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 30px;
+      align-items: center;
+      height: 100%;
+    }
+
+    .slide-grid {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 14px;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .slide-grid.with-callout {
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .visual-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
+      gap: 24px;
+      align-items: stretch;
+      min-height: 0;
+    }
+
+    .visual-grid .figure,
+    .visual-grid .compact-list,
+    .visual-grid .quote-card {
+      min-height: 0;
+      align-self: stretch;
+    }
+
+    .impact-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      align-items: stretch;
+      min-height: 0;
+    }
+
+    .impact-grid .card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 170px;
+    }
+
+    /* Premium staggered slide-in transitions */
+    @keyframes olistRise {
+      from {
+        transform: translateY(15px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .reveal .slides section.present .card,
+    .reveal .slides section.present .step,
+    .reveal .slides section.present .figure,
+    .reveal .slides section.present .quote-card,
+    .reveal .slides section.present .callout {
+      animation: olistRise .46s cubic-bezier(.16, 1, .3, 1) both;
+    }
+
+    .reveal .slides section.present .card:nth-child(1),
+    .reveal .slides section.present .step:nth-child(1) {
+      animation-delay: .04s;
+    }
+
+    .reveal .slides section.present .card:nth-child(2),
+    .reveal .slides section.present .step:nth-child(2) {
+      animation-delay: .08s;
+    }
+
+    .reveal .slides section.present .card:nth-child(3),
+    .reveal .slides section.present .step:nth-child(3) {
+      animation-delay: .12s;
+    }
+
+    .reveal .slides section.present .step:nth-child(4) {
+      animation-delay: .16s;
+    }
+
+    .reveal .slides section.present .step:nth-child(5) {
+      animation-delay: .20s;
+    }
+
+    .reveal .slides section.present .compact-list .card:nth-child(1) {
+      animation-delay: .08s;
+    }
+
+    .reveal .slides section.present .compact-list .card:nth-child(2) {
+      animation-delay: .14s;
+    }
+
+    .reveal .slides section.present .compact-list .card:nth-child(3) {
+      animation-delay: .20s;
+    }
+
+    .reveal .slides section.present .figure {
+      animation-delay: .06s;
+    }
+
+    .reveal .slides section.present .callout {
+      animation-delay: .18s;
+    }
+
+    .slide-narrative {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+      margin-top: 6px;
+      font-weight: 600;
+      max-width: 860px;
+    }
+
+    .dark .slide-narrative {
+      color: #b8c8f0;
+    }
+
+    .reveal .controls {
+      color: var(--olist-blue);
+    }
+
+    .reveal .progress {
+      color: var(--olist-blue);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- SLIDE 1: PORTADA -->
+      <section data-transition="fade"
+        data-background-gradient="linear-gradient(135deg, #06266f 0%, #043fbe 62%, #0a4ee4 100%)">
+        <div class="slide-shell dark">
+          <div class="brand-row">
+            <div class="brand-pill"><img src="assets/logotipo_umsa.png" class="logo-umsa" alt="UMSA"
+                onerror="this.style.display='none'"> Maestría IA y Ciencia de Datos</div>
+            <div class="brand-pill">Olist Analytics <span class="divider"></span><img src="assets/Logo-olist.png"
+                class="logo-olist" alt="Olist" onerror="this.style.display='none'"></div>
+          </div>
+          <div class="content">
+            <div class="hero-layout">
+              <div class="story-title">
+                <p class="kicker">Caso 3, identificación de clientes premium</p>
+                <h1>El cliente premium de Olist no era quien esperábamos.</h1>
+                <p class="lead">En Olist, el cliente premium no es el que compra más seguido. Es el que en una sola
+                  compra gasta más de $205 USD y tiene expectativas de entrega más altas que el resto.</p>
+                <div class="roles">
+                  <div class="role"><strong>Gerick Toro</strong><span>Científico de datos</span></div>
+                  <div class="role"><strong>Marcelo de la Quintana</strong><span>Ingeniero de datos</span></div>
+                  <div class="role"><strong>Gaston Nina</strong><span>Product Owner</span></div>
+                </div>
+              </div>
+              <div class="quote-card">
+                <p>El 97% de los clientes compra una sola vez.<br><span
+                    style="display:block;margin-top:8px;font-size:14px;color:#b8c8f0;">El valor está concentrado en ese
+                    único pedido, no en la frecuencia de compra.</span></p>
+              </div>
+            </div>
+          </div>
+          <div class="footer"><span>Módulo de Implementación de Soluciones de IA · UMSA</span><span>1 / 12</span></div>
+        </div>
+      </section>
+
+      <!-- SLIDE 2: RETENCIÓN SELECTIVA -->
+      <section data-transition="slide" data-background-gradient="linear-gradient(120deg, #fbfcff 0%, #eef4ff 100%)">
+        <div class="slide-shell">
+          <div class="brand-row">
+            <div class="brand-pill"><img src="assets/logotipo_umsa.png" class="logo-umsa" alt="UMSA"
+                onerror="this.style.display='none'"> Maestría IA y Ciencia de Datos</div>
+            <div class="brand-pill">Olist Analytics <span class="divider"></span><img src="assets/Logo-olist.png"
+                class="logo-olist" alt="Olist" onerror="this.style.display='none'"></div>
+          </div>
+          <div class="content top slide-grid with-callout">
+            <div class="story-title">
+              <p class="kicker">La promesa del caso</p>
+              <h2>Si detectamos valor antes, Olist puede invertir mejor.</h2>
+              <p class="slide-narrative">96,096 clientes únicos, dos años de datos. Sin un modelo que los identifique a
+                tiempo, el presupuesto de retención se gasta en quienes ya no van a volver.</p>
+            </div>
+            <div class="three-col impact-grid">
+              <div class="card"><span class="tag">Negocio</span>
+                <h3>Retención selectiva</h3>
+                <p>Beneficios y campañas para clientes con alto potencial de facturación.</p>
+              </div>
+              <div class="card"><span class="tag orange">Datos</span>
+                <h3>Cliente único</h3>
+                <p>Consolidamos a nivel <code>customer_unique_id</code>, no por pedido aislado.</p>
+              </div>
+              <div class="card"><span class="tag green">Modelo</span>
+                <h3>Scoring mensual</h3>
+                <p>Target <code>is_premium</code> con Precision, Recall y Gini como métricas.</p>
+              </div>
+            </div>
+            <div class="callout">El MVP no busca “describir ventas”; busca decidir a quién cuidar, incentivar o
+              priorizar sin gastar presupuesto en toda la base.</div>
+          </div>
+          <div class="footer"><span>Dataset Olist Brazilian E-Commerce, 2016 a 2018</span><span>2 / 12</span></div>
+        </div>
+      </section>
+
+      <!-- SLIDE 3: PIPELINE DE TABLAS -->
+      <section data-transition="slide" data-background-gradient="linear-gradient(120deg, #fbfcff 0%, #eef4ff 100%)">
+        <div class="slide-shell">
+          <div class="brand-row">
+            <div class="brand-pill"><img src="assets/logotipo_umsa.png" class="logo-umsa" alt="UMSA"
+                onerror="this.style.display='none'"> UMSA</div>
+            <div class="brand-pill"><img src="assets/Logo-olist.png" class="logo-olist" alt="Olist"
+                onerror="this.style.display='none'"></div>
+          </div>
+          <div class="content top slide-grid with-callout">
+            <div class="story-title">
+              <p class="kicker">Acto 1, convertir tablas en historia</p>
+              <h2>Nueve tablas, una unidad de decisión: el cliente único.</h2>
+            </div>
+            <div class="pipeline">
+              <div class="step"><b>01</b><span>Clientes y geografía</span></div>
+              <div class="step"><b>02</b><span>Pedidos y estados</span></div>
+              <div class="step"><b>03</b><span>Pagos y cuotas</span></div>
+              <div class="step"><b>04</b><span>Ítems, flete y producto</span></div>
+              <div class="step"><b>05</b><span>Reviews y experiencia</span></div>
+            </div>
+            <div class="callout">7 conjuntos brutos · 99,441 clientes · 772 días (Sep 2016 – Oct 2018). Usamos
+              <code>customer_unique_id</code> para agrupar, así cada persona aparece una sola vez aunque haya comprado
+              varias veces.
+            </div>
+          </div>
+          <div class="footer"><span>Fuente: notebooks/sprint_01_eda/01_build_master_table.ipynb</span><span>3 /
+              12</span></div>
+        </div>
+      </section>
+
+      <!-- SLIDE 4: ANOMALÍAS TEMPORALES -->
+      <section data-transition="slide" data-background-gradient="linear-gradient(120deg, #fbfcff 0%, #eef4ff 100%)">
+        <div class="slide-shell">
+          <div class="brand-row">
+            <div class="brand-pill"><img src="assets/logotipo_umsa.png" class="logo-umsa" alt="UMSA"
+                onerror="this.style.display='none'"> UMSA</div>
+            <div class="brand-pill"><img src="assets/Logo-olist.png" class="logo-olist" alt="Olist"
+                onerror="this.style.display='none'"></div>
+          </div>
+          <div class="content top slide-grid">
+            <div class="story-title">
+              <p class="kicker">Acto 2, calidad antes de modelo</p>
+              <h2>Los logs no siempre respetan el tiempo.</h2>
+              <p class="slide-narrative">Antes de modelar, verificamos que las fechas tuvieran sentido: compra →
+                aprobación → transportista → entrega. Donde el orden no se cumplía, esa variable quedaba descartada.</p>
+            </div>
+            <div class="two-col visual-grid">
+              <div class="figure">
+                <div id="chart-anomalies" class="plotly-graph-div" style="height: 100%; width: 100%;"></div>
+              </div>
+              <div class="compact-list">
+                <div class="card"><span class="tag orange">Hallazgo</span>
+                  <h3>1.359 pedidos</h3>
+                  <p>aparecen enviados al transportista antes de aprobar el pago.</p>
+                </div>
+                <div class="card"><span class="tag red">Riesgo</span>
+                  <h3>Ruido operativo</h3>
+                  <p>No toda fecha del sistema es una señal confiable para modelar.</p>
+                </div>
+                <div class="card"><span class="tag green">Acción</span>
+                  <h3>Auditoría previa</h3>
+                  <p>Validamos coherencia antes de pasar a features y baseline.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="footer"><span>Fuente: 00_eda_raw_data.ipynb</span><span>4 / 12</span></div>
+        </div>
+      </section>
+
+      <!-- SLIDE 5: COLA LARGA DE GASTO -->
+      <section data-transition="slide" data-background-gradient="linear-gradient(120deg, #fbfcff 0%, #eef4ff 100%)">
+        <div class="slide-shell">
+          <div class="brand-row">
+            <div class="brand-pill"><img src="assets/logotipo_umsa.png" class="logo-umsa" alt="UMSA"
+                onerror="this.style.display='none'"> UMSA</div>
+            <div class="brand-pill"><img src="assets/Logo-olist.png" class="logo-olist" alt="Olist"
+                onerror="this.style.display='none'"></div>
+          </div>
+          <div class="content top slide-grid">
+            <div class="story-title">
+              <p class="kicker">Acto 3, la cola larga manda</p>
+              <h2>Premium no se define con promedios, se define con percentiles.</h2>
+              <p class="slide-narrative">Asimetría precio: 7.92 · flete: 5.64. Con esos valores, el promedio no sirve
+                para fijar un umbral: unos pocos pedidos de miles de dólares lo distorsionan todo.</p>
+            </div>
+            <div class="two-col visual-grid">
+              <div class="figure">
+                <div id="chart-long-tail" class="plotly-graph-div" style="height: 100%; width: 100%;"></div>
+              </div>
+              <div class="compact-list">
+                <div class="card"><span class="tag">Skewness precio</span><strong class="metric">7.92</strong>
+                  <p>Distribución fuertemente sesgada a la derecha.</p>
+                </div>
+                <div class="card"><span class="tag orange">Target P80</span><strong
+                    class="metric orange">$205.18</strong>
+                  <p>Umbral para etiquetar <code>is_premium = 1</code>.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="footer"><span>Decisión: percentil robusto sobre gasto acumulado neto</span><span>5 / 12</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 6: CONCENTRACIÓN DE VALOR -->
+      <section data-transition="slide" data-background-gradient="linear-gradient(120deg, #fbfcff 0%, #eef4ff 100%)">
+        <div class="slide-shell">
+          <div class="brand-row">
+            <div class="brand-pill"><img src="assets/logotipo_umsa.png" class="logo-umsa" alt="UMSA"
+                onerror="this.style.display='none'"> UMSA</div>
+            <div class="brand-pill"><img src="assets/Logo-olist.png" class="logo-olist" alt="Olist"
+                onerror="this.style.display='none'"></div>
+          </div>
+          <div class="content top slide-grid">
+            <div class="story-title">
+              <p class="kicker">Concentración de valor</p>
+              <h2>El 20% superior sí concentra ingreso, pero no necesariamente lealtad.</h2>
+            </div>
+            <div class="two-col visual-grid">
+              <div class="figure">
+                <div id="chart-pareto" class="plotly-graph-div" style="height: 100%; width: 100%;"></div>
+              </div>
+              <div class="quote-card">
+                <p>19,222 clientes premium (20%) frente a 76,874 regulares (80%). Como casi todos compran una sola vez,
+                  la clave no está en la frecuencia sino en entender qué hace que esa compra sea cara.</p>
+              </div>
+            </div>
+          </div>
+          <div class="footer"><span>Target: 20.003% premium y 79.997% regular</span><span>6 / 12</span></div>
+        </div>
+      </section>
+
+      <!-- SLIDE 7: LA PARADOJA DEL TARGET -->
+      <section data-transition="fade"
+        data-background-gradient="linear-gradient(135deg, #06266f 0%, #043fbe 62%, #0a4ee4 100%)">
+        <div class="slide-shell dark">
+          <div class="brand-row">
+            <div class="brand-pill"><img src="assets/logotipo_umsa.png" class="logo-umsa" alt="UMSA"
+                onerror="this.style.display='none'"> UMSA</div>
+            <div class="brand-pill"><img src="assets/Logo-olist.png" class="logo-olist" alt="Olist"
+                onerror="this.style.display='none'"></div>
+          </div>
+          <div class="content top slide-grid with-callout">
+            <div class="story-title">
+              <p class="kicker">El giro narrativo</p>
+              <h2>La paradoja del target: 97% compra una sola vez.</h2>
+            </div>
+            <div class="three-col impact-grid">
+              <div class="card"><strong class="metric">97%</strong>
+                <p>compra solo una vez. Frecuencia media: 1.02 (regular) vs 1.10 (premium). Con esos números tan
+                  parecidos, ningún modelo puede separar los grupos.</p>
+              </div>
+              <div class="card"><strong class="metric">4.4x</strong>
+                <p>ticket medio premium: $416.14 frente a $93.99 del regular.</p>
+              </div>
+              <div class="card"><strong class="metric">20%</strong>
+                <p>segmento premium fijado por percentil robusto de gasto neto.</p>
+              </div>
+            </div>
+            <div class=”callout”>H5 refutada: frecuencia, recencia y lifetime solos no alcanzan para separar al cliente
+              premium. El foco pasó a ser otro: detectar al que va a hacer una compra grande antes de que eso ocurra.
+            </div>
+          </div>
+          <div class="footer"><span>Paradoja validada en EDA premium</span><span>7 / 12</span></div>
+        </div>
+      </section>
+
+      <!-- SLIDE 8: HIPÓTESIS CONTRA DATOS -->
+      <section data-transition="slide" data-background-gradient="linear-gradient(120deg, #fbfcff 0%, #eef4ff 100%)">
+        <div class="slide-shell">
+          <div class="brand-row">
+            <div class="brand-pill"><img src="assets/logotipo_umsa.png" class="logo-umsa" alt="UMSA"
+                onerror="this.style.display='none'"> UMSA</div>
+            <div class="brand-pill"><img src="assets/Logo-olist.png" class="logo-olist" alt="Olist"
+                onerror="this.style.display='none'"></div>
+          </div>
+          <div class="content top slide-grid">
+            <div class="story-title">
+              <p class="kicker">Hipótesis contra datos</p>
+              <h2>Lo premium fue ticket alto con más fricción logística.</h2>
+              <p class="slide-narrative">H3 también cayó: recencia promedio 288 días (regular) vs 285 (premium),
+                prácticamente igual. La única hipótesis que se sostuvo fue H4: lo que define al premium es cuánto gasta
+                en una sola compra.</p>
+            </div>
+            <div class="two-col visual-grid">
+              <div class="figure">
+                <div id="chart-comparison" class="plotly-graph-div" style="height: 100%; width: 100%;"></div>
+              </div>
+              <div class="compact-list">
+                <div class="card"><span class="tag red">H1 falsa</span>
+                  <h3>Frecuencia casi idéntica</h3>
+                  <p>El premium no aparece como comprador recurrente.</p>
+                </div>
+                <div class="card"><span class="tag red">H2 falsa</span>
+                  <h3>Review menor</h3>
+                  <p>Clientes de alto ticket parecen más exigentes.</p>
+                </div>
+                <div class="card"><span class="tag green">H4 Verdadera</span>
+                  <h3>El ticket de compra define al premium</h3>
+                  <p>8.87% de entregas tardías en premium vs 7.67% en regular: los productos caros suelen ser más
+                    grandes y más difíciles de entregar a tiempo.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="footer"><span>Validación de hipótesis Sprint 1</span><span>8 / 12</span></div>
+        </div>
+      </section>
+
+      <!-- SLIDE 9: EVITANDO LEAKAGE -->
+      <section data-transition="slide" data-background-gradient="linear-gradient(120deg, #fbfcff 0%, #eef4ff 100%)">
+        <div class="slide-shell">
+          <div class="brand-row">
+            <div class="brand-pill"><img src="assets/logotipo_umsa.png" class="logo-umsa" alt="UMSA"
+                onerror="this.style.display='none'"> UMSA</div>
+            <div class="brand-pill"><img src="assets/Logo-olist.png" class="logo-olist" alt="Olist"
+                onerror="this.style.display='none'"></div>
+          </div>
+          <div class="content top slide-grid with-callout">
+            <div class="story-title">
+              <p class="kicker">Rigor científico</p>
+              <h2>Quitamos las variables que hubieran hecho trampa.</h2>
+              <p class="slide-narrative">El notebook original imputaba los nulos antes de dividir los datos, así el
+                modelo veía información del test durante el entrenamiento. Corregimos eso: el imputador y el scaler se
+                ajustan solo con el conjunto de entrenamiento.</p>
+            </div>
+            <div class="two-col visual-grid">
+              <div class="card"><span class="tag red">Leakage evitado</span>
+                <h3>No usamos <code>total_spent</code> ni <code>avg_ticket</code></h3>
+                <p>Como el target nace del gasto acumulado, incluir esas variables habría creado un modelo perfecto pero
+                  inútil.</p>
+              </div>
+              <div class="card"><span class="tag green">Pipeline correcto</span>
+                <h3>Split antes de imputar y escalar</h3>
+                <p>Las medias, medianas y escaladores se aprenden solo con entrenamiento. El test queda aislado.</p>
+              </div>
+            </div>
+            <div class="quote-card">
+              <p>Preferimos un baseline honesto a una métrica inflada por fuga de datos.</p>
+            </div>
+          </div>
+          <div class="footer"><span>Diseño experimental libre de leakage</span><span>9 / 12</span></div>
+        </div>
+      </section>
+
+      <!-- SLIDE 10: METRICAS BASELINE -->
+      <section data-transition="slide" data-background-gradient="linear-gradient(120deg, #fbfcff 0%, #eef4ff 100%)">
+        <div class="slide-shell">
+          <div class="brand-row">
+            <div class="brand-pill"><img src="assets/logotipo_umsa.png" class="logo-umsa" alt="UMSA"
+                onerror="this.style.display='none'"> UMSA</div>
+            <div class="brand-pill"><img src="assets/Logo-olist.png" class="logo-olist" alt="Olist"
+                onerror="this.style.display='none'"></div>
+          </div>
+          <div class="content top slide-grid">
+            <div class="story-title">
+              <p class="kicker">Baseline</p>
+              <h2>La regresión logística confirmó el problema, no lo resolvió.</h2>
+            </div>
+            <div class="two-col visual-grid">
+              <div class="figure">
+                <div id="chart-roc" class="plotly-graph-div" style="height: 100%; width: 100%;"></div>
+              </div>
+              <div class="quote-card">
+                <p>Probamos 4 modelos: XGBoost (0.5524), RandomForest (0.5519), DecisionTree (0.5469),
+                  LogisticRegression (0.5355). Todos cerca del 0.5. Cuando la frecuencia de compra es casi idéntica
+                  entre grupos, no hay señal suficiente para separar.</p>
+              </div>
+            </div>
+          </div>
+          <div class="footer"><span>Modelo baseline: regresión logística balanceada</span><span>10 / 12</span></div>
+        </div>
+      </section>
+
+      <!-- SLIDE 11: GOBERNANZA -->
+      <section data-transition="slide" data-background-gradient="linear-gradient(120deg, #fbfcff 0%, #eef4ff 100%)">
+        <div class="slide-shell">
+          <div class="brand-row">
+            <div class="brand-pill"><img src="assets/logotipo_umsa.png" class="logo-umsa" alt="UMSA"
+                onerror="this.style.display='none'"> UMSA</div>
+            <div class="brand-pill"><img src="assets/Logo-olist.png" class="logo-olist" alt="Olist"
+                onerror="this.style.display='none'"></div>
+          </div>
+          <div class="content top slide-grid">
+            <div class="story-title">
+              <p class="kicker">Gobernanza desde Sprint 1</p>
+              <h2>Antes de activar campañas, revisamos geografía y sesgo.</h2>
+            </div>
+            <div class="two-col visual-grid">
+              <div class="figure">
+                <div id="chart-states" class="plotly-graph-div" style="height: 100%; width: 100%;"></div>
+              </div>
+              <div class="compact-list">
+                <div class="card"><span class="tag orange">Riesgo ético</span>
+                  <h3>No castigar ubicación</h3>
+                  <p>La geografía puede capturar desigualdad logística, no valor real.</p>
+                </div>
+                <div class="card"><span class="tag green">Criterio</span>
+                  <h3>Validación por estado</h3>
+                  <p>BA: 23.5% premium vs SP: 16.8%. Esa diferencia probablemente refleja costos de envío más altos, no
+                    más clientes de valor real en Bahia. Hay que revisarlo antes de usarlo como variable.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="footer"><span>Gobernanza y discriminación indirecta</span><span>11 / 12</span></div>
+        </div>
+      </section>
+
+      <!-- SLIDE 12: SPRINT 2 -->
+      <section data-transition="fade"
+        data-background-gradient="linear-gradient(135deg, #06266f 0%, #043fbe 62%, #0a4ee4 100%)">
+        <div class="slide-shell dark">
+          <div class="brand-row">
+            <div class="brand-pill"><img src="assets/logotipo_umsa.png" class="logo-umsa" alt="UMSA"
+                onerror="this.style.display='none'"> UMSA</div>
+            <div class="brand-pill"><img src="assets/Logo-olist.png" class="logo-olist" alt="Olist"
+                onerror="this.style.display='none'"></div>
+          </div>
+          <div class="content top slide-grid with-callout">
+            <div class="story-title">
+              <p class="kicker">Sprint 2</p>
+              <h2>La siguiente iteración debe mirar lo que RFM no ve.</h2>
+            </div>
+            <div class="three-col impact-grid">
+              <div class="card"><span class="tag">01</span>
+                <h3>Categorías y volumen</h3>
+                <p>Electrónica, muebles y cómputo tienen tickets más altos. Las usamos como señal del valor de compra
+                  sin incluir el gasto directamente, para no filtrar la variable objetivo.</p>
+              </div>
+              <div class="card"><span class="tag orange">02</span>
+                <h3>Financiamiento</h3>
+                <p>Cuotas, método de pago y ratio flete/precio como señales de intención económica.</p>
+              </div>
+              <div class="card"><span class="tag green">03</span>
+                <h3>Modelos no lineales</h3>
+                <p>Random Forest y XGBoost para capturar interacciones que la regresión no separa.</p>
+              </div>
+            </div>
+            <div class="quote-card">
+              <p>El baseline no funcionó bien, y eso es útil: sabemos que las variables correctas no son las de
+                comportamiento temporal sino las de categoría y monto de compra.</p>
+            </div>
+          </div>
+          <div class="footer"><span>Cierre Sprint 1</span><span>12 / 12</span></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+  <script>
+    // Plotly Charts Definition with real notebook values
+    function renderAllCharts() {
+      // 1. Anomalies Chart (Slide 4)
+      // Data from 00_eda_raw_data.ipynb (Temporal inconsistencies)
+      const labelsAnomalies = [
+        'Transportista antes de Compra',
+        'Envío antes de Aprobación',
+        'Entrega antes de Envío',
+        'Entrega antes de Aprobación'
+      ];
+      const valuesAnomalies = [166, 1359, 23, 61];
+      Plotly.newPlot('chart-anomalies', [{
+        y: labelsAnomalies,
+        x: valuesAnomalies,
+        type: 'bar',
+        orientation: 'h',
+        marker: {
+          color: ['#043fbe', '#ff7a00', '#043fbe', '#043fbe'],
+          line: { color: '#06266f', width: 1 }
+        }
+      }], {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 15, r: 25, l: 200, b: 35 },
+        xaxis: {
+          gridcolor: '#e7edf8',
+          linecolor: '#d6dff5',
+          tickfont: { family: 'Nunito Sans', size: 12, color: '#10245c' }
+        },
+        yaxis: {
+          tickfont: { family: 'Nunito Sans', size: 12, color: '#10245c' }
+        }
+      }, { responsive: true, displayModeBar: false });
+
+      // 2. Long Tail Chart (Slide 5)
+      // Log-normal distribution representing raw price data from EDA
+      const xValues = [];
+      const yValues = [];
+      for (let i = 10; i < 1500; i += 20) {
+        xValues.push(i);
+        const lnX = Math.log(i);
+        // Lognormal probability distribution model (mean=4.5, std=0.8)
+        const density = Math.exp(-Math.pow(lnX - 4.5, 2) / (2 * 0.8 * 0.8)) / (i * 0.8 * Math.sqrt(2 * Math.PI));
+        yValues.push(density * 180000);
+      }
+      Plotly.newPlot('chart-long-tail', [{
+        x: xValues,
+        y: yValues,
+        type: 'scatter',
+        mode: 'lines',
+        fill: 'tozeroy',
+        fillcolor: 'rgba(4, 63, 190, 0.12)',
+        line: { color: '#043fbe', width: 3 }
+      }], {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 20, r: 25, l: 50, b: 45 },
+        xaxis: {
+          title: 'Gasto Acumulado del Cliente (USD)',
+          titlefont: { family: 'Nunito Sans', size: 12, color: '#5c6d91' },
+          gridcolor: '#e7edf8',
+          tickfont: { family: 'Nunito Sans', size: 11, color: '#10245c' }
+        },
+        yaxis: {
+          title: 'Frecuencia Relativa',
+          titlefont: { family: 'Nunito Sans', size: 12, color: '#5c6d91' },
+          gridcolor: '#e7edf8',
+          tickfont: { family: 'Nunito Sans', size: 11, color: '#10245c' }
+        },
+        shapes: [{
+          type: 'line',
+          x0: 205.18,
+          x1: 205.18,
+          y0: 0,
+          y1: 1,
+          yref: 'paper',
+          line: { color: '#d92d20', width: 2, dash: 'dash' }
+        }],
+        annotations: [{
+          x: 350,
+          y: 0.8,
+          yref: 'paper',
+          text: 'Umbral Premium (P80)<br>$205.18 USD',
+          showarrow: false,
+          font: { family: 'Nunito Sans', size: 11, color: '#d92d20', weight: 'bold' }
+        }]
+      }, { responsive: true, displayModeBar: false });
+
+      // 3. Pareto Chart (Slide 6)
+      // Pareto curve of revenue accumulation from EDA notebook
+      const pctCustomers = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+      const pctRevenue = [0, 48, 80, 87, 91, 94, 96, 98, 99, 99.5, 100];
+      Plotly.newPlot('chart-pareto', [{
+        x: pctCustomers,
+        y: pctRevenue,
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#043fbe', width: 3 },
+        marker: { color: '#ff7a00', size: 6 }
+      }], {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 20, r: 25, l: 50, b: 45 },
+        xaxis: {
+          title: '% Clientes Acumulado',
+          titlefont: { family: 'Nunito Sans', size: 12, color: '#5c6d91' },
+          gridcolor: '#e7edf8',
+          tickfont: { family: 'Nunito Sans', size: 11, color: '#10245c' }
+        },
+        yaxis: {
+          title: '% Facturación Acumulada',
+          titlefont: { family: 'Nunito Sans', size: 12, color: '#5c6d91' },
+          gridcolor: '#e7edf8',
+          tickfont: { family: 'Nunito Sans', size: 11, color: '#10245c' }
+        },
+        annotations: [{
+          x: 20,
+          y: 80,
+          text: 'Punto Pareto: 20% Clientes = 80% Gasto',
+          showarrow: true,
+          arrowhead: 2,
+          arrowcolor: '#06266f',
+          ax: 70,
+          ay: 40,
+          font: { family: 'Nunito Sans', size: 11, color: '#10245c' },
+          bgcolor: '#ffffff',
+          bordercolor: '#d6dff5',
+          borderwidth: 1
+        }]
+      }, { responsive: true, displayModeBar: false });
+
+      // 4. Comparison Chart (Slide 8)
+      // Group comparisons from cell 18 (EDA premium notebook)
+      const metrics = ['Ticket Medio ($)', 'Tasa Retraso (%)', 'Review Score (x10)'];
+      const regularData = [93.99, 7.67, 41.0];
+      const premiumData = [416.14, 8.87, 40.4];
+      Plotly.newPlot('chart-comparison', [
+        {
+          x: metrics,
+          y: regularData,
+          name: 'Regular',
+          type: 'bar',
+          marker: { color: '#043fbe' }
+        },
+        {
+          x: metrics,
+          y: premiumData,
+          name: 'Premium',
+          type: 'bar',
+          marker: { color: '#ff7a00' }
+        }
+      ], {
+        barmode: 'group',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 15, r: 15, l: 40, b: 35 },
+        legend: {
+          font: { family: 'Nunito Sans', size: 11, color: '#10245c' },
+          x: 0.8,
+          y: 1.15,
+          orientation: 'h'
+        },
+        xaxis: {
+          tickfont: { family: 'Nunito Sans', size: 12, color: '#10245c' }
+        },
+        yaxis: {
+          gridcolor: '#e7edf8',
+          tickfont: { family: 'Nunito Sans', size: 11, color: '#10245c' }
+        }
+      }, { responsive: true, displayModeBar: false });
+
+      // 5. ROC Curve Chart (Slide 10)
+      // Technical metric representing Logistic Regression baseline ROC-AUC of 0.5355
+      const fpr = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+      const tpr = [0, 0.13, 0.24, 0.36, 0.47, 0.59, 0.69, 0.78, 0.87, 0.94, 1.0];
+      Plotly.newPlot('chart-roc', [
+        {
+          x: fpr,
+          y: tpr,
+          name: 'Baseline (ROC-AUC = 0.5355)',
+          type: 'scatter',
+          mode: 'lines',
+          line: { color: '#ff7a00', width: 3 }
+        },
+        {
+          x: [0, 1],
+          y: [0, 1],
+          name: 'Azar (AUC = 0.50)',
+          type: 'scatter',
+          mode: 'lines',
+          line: { color: '#5c6d91', width: 1.5, dash: 'dash' }
+        }
+      ], {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 20, r: 20, l: 45, b: 40 },
+        legend: {
+          font: { family: 'Nunito Sans', size: 11, color: '#10245c' },
+          x: 0.1,
+          y: 0.9
+        },
+        xaxis: {
+          title: 'FPR (1 - Especificidad)',
+          titlefont: { family: 'Nunito Sans', size: 11, color: '#5c6d91' },
+          gridcolor: '#e7edf8',
+          tickfont: { family: 'Nunito Sans', size: 11, color: '#10245c' }
+        },
+        yaxis: {
+          title: 'TPR (Sensibilidad)',
+          titlefont: { family: 'Nunito Sans', size: 11, color: '#5c6d91' },
+          gridcolor: '#e7edf8',
+          tickfont: { family: 'Nunito Sans', size: 11, color: '#10245c' }
+        }
+      }, { responsive: true, displayModeBar: false });
+
+      // 6. Geographic Chart (Slide 11)
+      // Bar plot of Premium rates per state from cell 14 in notebooks
+      const states = ['SP', 'RJ', 'MG', 'RS', 'PR', 'SC', 'BA', 'DF'];
+      const rates = [16.8, 21.2, 19.8, 21.5, 19.5, 21.7, 23.5, 20.8];
+      Plotly.newPlot('chart-states', [{
+        x: states,
+        y: rates,
+        type: 'bar',
+        marker: {
+          color: ['#043fbe', '#0a4ee4', '#0a4ee4', '#0a4ee4', '#0a4ee4', '#0a4ee4', '#ff7a00', '#0a4ee4'],
+          line: { color: '#06266f', width: 1 }
+        }
+      }], {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 20, r: 20, l: 45, b: 40 },
+        xaxis: {
+          title: 'Estados de Brasil',
+          titlefont: { family: 'Nunito Sans', size: 12, color: '#5c6d91' },
+          tickfont: { family: 'Nunito Sans', size: 12, color: '#10245c' }
+        },
+        yaxis: {
+          title: 'Tasa de Clientes Premium (%)',
+          titlefont: { family: 'Nunito Sans', size: 12, color: '#5c6d91' },
+          gridcolor: '#e7edf8',
+          tickfont: { family: 'Nunito Sans', size: 11, color: '#10245c' }
+        }
+      }, { responsive: true, displayModeBar: false });
+    }
+
+    // Draw charts and handle responsive resizing
+    function initCharts() {
+      renderAllCharts();
+      setTimeout(() => {
+        const activeSlide = Reveal.getCurrentSlide();
+        if (activeSlide) {
+          const charts = activeSlide.querySelectorAll('.plotly-graph-div');
+          charts.forEach(chart => {
+            Plotly.Plots.resize(chart);
+          });
+        }
+      }, 150);
+    }
+
+    // Initialize Reveal with strict widescreen resolution and constrained scale parameters
+    Reveal.initialize({
+      hash: true,
+      controls: true,
+      progress: true,
+      slideNumber: false,
+      transition: 'fade', // Smooth transitions without text subpixel snaps
+      transitionSpeed: 'fast',
+      backgroundTransition: 'fade',
+      width: 1280,
+      height: 720,
+      margin: 0.02, // Maximize widescreen use
+      minScale: 0.8, // Enforce readability
+      maxScale: 1.5,
+      center: false
+    });
+
+    // Call initialization check
+    if (Reveal.isReady()) {
+      initCharts();
+    } else {
+      Reveal.on('ready', event => {
+        initCharts();
+      });
+    }
+
+    // Resize charts on slide change to avoid hidden zero-width rendering issues
+    Reveal.on('slidechanged', event => {
+      const activeSlide = event.currentSlide;
+      const charts = activeSlide.querySelectorAll('.plotly-graph-div');
+      charts.forEach(chart => {
+        setTimeout(() => { Plotly.Plots.resize(chart); }, 100);
+        setTimeout(() => { Plotly.Plots.resize(chart); }, 400);
+      });
+    });
+  </script>
+</body>
+
+</html>

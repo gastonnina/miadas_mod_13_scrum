@@ -11,11 +11,13 @@ Modulo:
 - [🎯 Tema del proyecto](#-tema-del-proyecto)
 - [🧭 Objetivo general](#-objetivo-general)
 - [🏗️ Arquitectura general](#️-arquitectura-general)
-- [🧠 Definicion preliminar del target](#-definicion-preliminar-del-target)
+- [🧠 Definicion del target (actual)](#-definicion-del-target-actual)
 - [🛠️ Stack tecnologico](#️-stack-tecnologico)
 - [📊 Dataset](#-dataset)
 - [⚙️ Configuracion del entorno](#️-configuracion-del-entorno)
 - [📁 Estructura del repositorio](#-estructura-del-repositorio)
+- [📦 Entregables por sprint](#-entregables-por-sprint)
+- [🚀 Scripts de ejecucion](#-scripts-de-ejecucion)
 - [🗺️ Esquema de datos](#️-esquema-de-datos)
 - [🧪 Metodologia de trabajo (resumen)](#-metodologia-de-trabajo-resumen)
 - [🚧 Estado del proyecto](#-estado-del-proyecto)
@@ -48,18 +50,17 @@ CSV raw
 -> Seguimiento de experimentos (MLflow)  
 -> API / Dashboard
 
-## 🧠 Definicion preliminar del target
+## 🧠 Definicion del target (actual)
 
-La variable objetivo `is_premium` se construira a partir del comportamiento transaccional del cliente.
+La variable objetivo `is_premium` se define sobre gasto neto acumulado por cliente:
 
-Definicion inicial (sujeta a validacion en EDA):
-- `is_premium = 1` para clientes con mayor valor acumulado de compra (`total_spent`) y recurrencia (`frequency`) en el periodo analizado.
-- `is_premium = 0` para el resto de clientes.
+- `is_premium = 1` si `total_spent >= P80`.
+- `is_premium = 0` para el resto.
 
-Criterio preliminar sugerido para baseline:
-- Usar percentil (por ejemplo p75 o p80) sobre `total_spent` combinado con umbral minimo de `frequency`.
-
-La definicion final se cerrara despues del analisis exploratorio y validacion con metricas de negocio.
+Valores usados en Sprint 1:
+- Umbral P80: `205.18 USD`.
+- Distribucion: ~`80%` regulares y ~`20%` premium.
+- Justificacion: alta asimetria del gasto y necesidad de criterio robusto frente a outliers.
 
 ## 🛠️ Stack tecnologico
 
@@ -101,6 +102,33 @@ pip install -e .
 - `docker/`: contenedores para API y dashboard
 - `scripts/`: automatizaciones de ejecucion
 
+## 📦 Entregables por sprint
+
+Sprint 1 (`EDA + baseline`):
+- Notebook EDA raw data: [notebooks/sprint_01_eda/00_eda_raw_data.ipynb](notebooks/sprint_01_eda/00_eda_raw_data.ipynb)
+- Notebook master table: [notebooks/sprint_01_eda/01_build_master_table.ipynb](notebooks/sprint_01_eda/01_build_master_table.ipynb)
+- Notebook EDA premium: [notebooks/sprint_01_eda/02_eda_premium_customers.ipynb](notebooks/sprint_01_eda/02_eda_premium_customers.ipynb)
+- Hipotesis, target y metricas: [reports/sprint_01/documento_hipotesis_target_metricas.md](reports/sprint_01/documento_hipotesis_target_metricas.md)
+- Storytelling breve: [reports/sprint_01/storytelling_breve.md](reports/sprint_01/storytelling_breve.md)
+- Reporte Sprint 1 (PDF): [reports/sprint_01/informes/sprint_01_reporte.pdf](reports/sprint_01/informes/sprint_01_reporte.pdf)
+- Presentacion final Sprint 1 (PDF): [reports/sprint_01/informes/sprint_01_presentacion.pdf](reports/sprint_01/informes/sprint_01_presentacion.pdf)
+
+Sprint 2 (`pipeline de features`):
+- Estado: `Pendiente`
+
+Sprint 3 (`modelado y comparacion`):
+- Estado: `Pendiente`
+
+Sprint 4 (`integracion y demo`):
+- Estado: `Pendiente`
+
+## 🚀 Scripts de ejecucion
+
+Los scripts del proyecto cubren preparacion de datos, particionado temporal.
+
+Para detalle de uso, orden por etapas y parametros:
+[scripts/README.md](scripts/README.md)
+
 ## 🗺️ Esquema de datos
 
 - Archivo DBML local: `docs/dbdiagram/olist_schema.dbml`
@@ -115,4 +143,6 @@ pip install -e .
 
 ## 🚧 Estado del proyecto
 
-En desarrollo academico por sprints, de acuerdo con el plan del modulo.
+En desarrollo academico por sprints.
+Estado actual: **Sprint 1** (definicion del problema, EDA inicial,
+master table y baseline logistico).
