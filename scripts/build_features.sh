@@ -1,10 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CONDA_ENV="${CONDA_ENV:-ai-miadas}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-run() { conda run -n "$CONDA_ENV" python3 "$@"; }
+# Auto-detect Python runtime:
+#   1. CONDA_ENV variable set  → conda run -n <env>
+#   2. .venv exists at project root → use it directly (no activation needed)
+#   3. fallback → python in current PATH (activated venv, system python, etc.)
+if [ -n "${CONDA_ENV:-}" ]; then
+    run() { conda run -n "$CONDA_ENV" python "$@"; }
+    echo "Entorno: conda ($CONDA_ENV)"
+elif [ -f "$ROOT/.venv/bin/python" ]; then
+    run() { "$ROOT/.venv/bin/python" "$@"; }
+    echo "Entorno: .venv"
+else
+    run() { python "$@"; }
+    echo "Entorno: python en PATH ($(which python))"
+fi
 
 echo "=== Sprint 2 Pipeline ==="
 echo "Root: $ROOT"
