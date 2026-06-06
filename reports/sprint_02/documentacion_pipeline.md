@@ -392,6 +392,66 @@ Conclusion metodologica:
 - la politica de leakage queda explicitada y aplicada de forma reproducible
 - el set final de `28` features es consistente con esa politica y produce mejora real frente al baseline sin depender de proxies monetarias directas
 
+## Simulacion mensual con holdout
+
+### Objetivo
+
+Probar que el pipeline recalcula el estado premium sin cambios de codigo cuando llegan nuevos datos transaccionales. La ventana de holdout cubre agosto-octubre 2018 (3 meses), los datos mas recientes disponibles en el dataset.
+
+### Como se ejecuta
+
+```bash
+python3 src/data/build_master_table.py \
+    --profile-source holdout \
+    --threshold-mode apply
+
+python3 src/features/build_rfm_features.py \
+    --input-path data/processed/03_master_table_clean_holdout.parquet \
+    --output-path data/processed/holdout_features_rfm.parquet \
+    --metadata-path data/processed/holdout_features_rfm_metadata.json
+```
+
+El script completo `scripts/build_features.sh` corre dev + holdout en una sola llamada.
+
+### Cambio de codigo necesario
+
+Se agregaron 4 modificaciones menores a `src/data/build_master_table.py`:
+
+- propiedad `split_holdout_dir` en `BuildConfig`
+- `"holdout"` al set valido de perfiles en `validate()`
+- mapeo de `holdout` al directorio correcto en `load_dataset()`
+- nombres de artefactos de salida diferenciados por perfil (`_dev`, `_holdout`)
+
+Ningun otro modulo necesito cambios.
+
+### Resultado de la simulacion
+
+| Metrica | DEV (historico) | HOLDOUT (ago-oct 2018) |
+| --- | --- | --- |
+| Umbral premium (fijo) | 197.01 | 197.01 (apply) |
+| Clientes en el periodo | 96,096 | 6,468 activos |
+| Premium rate (activos) | 20.00% | 19.37% |
+| Ticket prom premium | 402.66 | 409.68 |
+| Ticket prom regular | 92.27 | 91.57 |
+| Ratio ticket (prem/reg) | 4.36x | 4.47x |
+| Concentracion facturacion premium | 56.03% | 52.9% |
+
+### Interpretacion
+
+- La tasa de premium entre clientes activos del holdout (19.4%) es consistente con el dev (20.0%), lo que confirma que el umbral fijo aplica de forma estable en una nueva ventana temporal.
+- El ratio de ticket (4.47x vs 4.36x) es practicamente identico entre periodos, lo que valida que el segmento premium mantiene su definicion de negocio.
+- Los 89,628 clientes sin actividad en el holdout tienen `total_spent = 0` y quedan clasificados como regulares por el imputador — comportamiento esperado y correcto.
+- El pipeline corrio sin cambios de logica de negocio, solo cambiando el perfil de entrada.
+
+### Artefactos generados
+
+- `data/processed/03_master_table_clean_holdout.parquet`
+- `data/processed/master_table_holdout.parquet`
+- `data/processed/holdout_features_rfm.parquet`
+- `data/processed/holdout_features_rfm_metadata.json`
+- `data/interim/01_master_table_raw_holdout.parquet`
+- `data/interim/02_master_table_profile_holdout.md`
+
 ## Alcance y siguiente mejora metodologica
 
 El alcance de Sprint 2 es construir un pipeline reproducible de segmentacion y modelado historico de clientes premium. El split temporal `train/validation` permite validar estabilidad reciente, pero las features y el target todavia se construyen sobre la historia agregada disponible del cliente.

@@ -52,6 +52,10 @@ class BuildConfig:
         return self.project_root / "data" / "splits" / "temporal_2018q4" / "dev"
 
     @property
+    def split_holdout_dir(self) -> Path:
+        return self.project_root / "data" / "splits" / "temporal_2018q4" / "holdout_3m"
+
+    @property
     def processed_dir(self) -> Path:
         return self.project_root / "data" / "processed"
 
@@ -60,8 +64,8 @@ class BuildConfig:
         return self.project_root / "data" / "interim"
 
     def validate(self) -> None:
-        if self.profile_source not in {"raw", "dev"}:
-            raise ValueError("profile_source debe ser 'raw' o 'dev'")
+        if self.profile_source not in {"raw", "dev", "holdout"}:
+            raise ValueError("profile_source debe ser 'raw', 'dev' o 'holdout'")
 
 
 def resolve_project_root() -> Path:
@@ -69,12 +73,16 @@ def resolve_project_root() -> Path:
 
 
 def load_dataset(config: BuildConfig, file_stem: str, force_raw: bool = False) -> pd.DataFrame:
+    split_dirs = {
+        "dev": config.split_dev_dir,
+        "holdout": config.split_holdout_dir,
+    }
     source_dir = config.raw_dir if force_raw else (
-        config.raw_dir if config.profile_source == "raw" else config.split_dev_dir
+        config.raw_dir if config.profile_source == "raw" else split_dirs[config.profile_source]
     )
 
     effective_stem = file_stem
-    if not force_raw and config.profile_source == "dev":
+    if not force_raw and config.profile_source in {"dev", "holdout"}:
         effective_stem = SPLIT_NAME_MAP.get(file_stem, file_stem)
 
     parquet_path = source_dir / f"{effective_stem}.parquet"
@@ -429,7 +437,7 @@ def load_threshold_metadata(metadata_path: Path) -> dict[str, object]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Construye la master table del proyecto.")
-    parser.add_argument("--profile-source", default="dev", choices=["raw", "dev"])
+    parser.add_argument("--profile-source", default="dev", choices=["raw", "dev", "holdout"])
     parser.add_argument("--output-path", type=Path, default=None)
     parser.add_argument(
         "--raw-output-path",
@@ -462,15 +470,15 @@ def main() -> None:
     args = parse_args()
     config = BuildConfig(project_root=resolve_project_root(), profile_source=args.profile_source)
 
-    raw_output_path = args.raw_output_path or (config.interim_dir / "01_master_table_raw_sprint2.parquet")
+    profile_prefix = {"raw": "raw", "dev": "dev", "holdout": "holdout"}.get(config.profile_source, config.profile_source)
+    raw_output_path = args.raw_output_path or (config.interim_dir / f"01_master_table_raw_{profile_prefix}.parquet")
     clean_output_path = args.output_path or (
-        config.processed_dir
-        / ("03_master_table_clean.parquet" if config.profile_source == "dev" else "03_master_table_clean_raw.parquet")
+        config.processed_dir / f"03_master_table_clean_{profile_prefix}.parquet"
     )
     compatibility_output_path = config.processed_dir / (
-        "master_table.parquet" if config.profile_source == "raw" else "master_table_dev.parquet"
+        "master_table.parquet" if config.profile_source == "raw" else f"master_table_{profile_prefix}.parquet"
     )
-    profile_output_path = args.profile_output_path or (config.interim_dir / "02_master_table_profile.md")
+    profile_output_path = args.profile_output_path or (config.interim_dir / f"02_master_table_profile_{profile_prefix}.md")
     threshold_metadata_path = args.threshold_metadata_path or (
         config.processed_dir / "premium_threshold_dev.json"
     )
@@ -501,11 +509,16 @@ def main() -> None:
     save_dataframe(master_table_clean, clean_output_path)
     save_dataframe(master_table_clean, compatibility_output_path)
     save_text(profile_markdown, profile_output_path)
+    reference_population_map = {
+        "dev": "data/splits/temporal_2018q4/dev",
+        "holdout": "data/splits/temporal_2018q4/holdout_3m",
+        "raw": "data/raw",
+    }
     save_threshold_metadata(
         threshold,
         threshold_metadata_path,
         profile_source=config.profile_source,
-        reference_population="data/splits/temporal_2018q4/dev" if config.profile_source == "dev" else "data/raw",
+        reference_population=reference_population_map.get(config.profile_source, "data/raw"),
         mode=threshold_mode_used,
     )
 

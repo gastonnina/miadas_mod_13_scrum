@@ -1,7 +1,7 @@
 {
-  "profile_source": "dev",
+  "profile_source": "holdout",
   "premium_threshold": 197.01,
   "threshold_rule": "P80",
-  "threshold_reference_population": "data/splits/temporal_2018q4/dev",
+  "threshold_reference_population": "data/splits/temporal_2018q4/holdout_3m",
   "threshold_mode": "apply"
 }
