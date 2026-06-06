@@ -18,6 +18,8 @@ Modulo:
 - [📁 Estructura del repositorio](#-estructura-del-repositorio)
 - [📦 Entregables por sprint](#-entregables-por-sprint)
 - [🚀 Scripts de ejecucion](#-scripts-de-ejecucion)
+  - [Prerequisitos (una sola vez)](#prerequisitos-una-sola-vez)
+  - [Sprint 2 — Pipeline reproducible completo](#sprint-2--pipeline-reproducible-completo)
 - [🗺️ Esquema de datos](#️-esquema-de-datos)
 - [🧪 Metodologia de trabajo (resumen)](#-metodologia-de-trabajo-resumen)
 - [🚧 Estado del proyecto](#-estado-del-proyecto)
@@ -25,8 +27,9 @@ Modulo:
 
 ## 👥 Integrantes del grupo
 
-- Gaston Humberto Gerick Marcelo Nelson
-- Nina Sossa Toro Rodriguez De la Quintana Illanes
+- Gaston Nina
+- Gerick Toro
+- Marcelo De la Quintana
 
 ## 🎯 Tema del proyecto
 
