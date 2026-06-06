@@ -83,10 +83,19 @@ Valores usados en Sprint 1:
 
 ## ⚙️ Configuracion del entorno
 
+**Opcion A — venv (equipo)**
+
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -U pip
+pip install -e .
+```
+
+**Opcion B — conda (alternativa personal)**
+
+```bash
+conda activate ai-miadas
 pip install -e .
 ```
 
@@ -114,7 +123,12 @@ Sprint 1 (`EDA + baseline`):
 - Presentacion final Sprint 1 (PDF): [reports/sprint_01/informes/sprint_01_presentacion.pdf](reports/sprint_01/informes/sprint_01_presentacion.pdf)
 
 Sprint 2 (`pipeline de features`):
-- Estado: `Pendiente`
+- Estado: `Completado`
+- Plan y checklist: [reports/sprint_02/plan_implementacion_sprint_2.md](reports/sprint_02/plan_implementacion_sprint_2.md)
+- DAG tecnico reproducible: [reports/sprint_02/dag_pipeline_sprint_2.md](reports/sprint_02/dag_pipeline_sprint_2.md)
+- Documentacion del pipeline: [reports/sprint_02/documentacion_pipeline.md](reports/sprint_02/documentacion_pipeline.md)
+- Notebook integrador: [notebooks/sprint_02_pipeline/02_pipeline_features.ipynb](notebooks/sprint_02_pipeline/02_pipeline_features.ipynb)
+- Evaluacion vs baseline: [reports/sprint_02/evaluation_vs_baseline.md](reports/sprint_02/evaluation_vs_baseline.md)
 
 Sprint 3 (`modelado y comparacion`):
 - Estado: `Pendiente`
@@ -124,10 +138,57 @@ Sprint 4 (`integracion y demo`):
 
 ## 🚀 Scripts de ejecucion
 
-Los scripts del proyecto cubren preparacion de datos, particionado temporal.
+### Prerequisitos (una sola vez)
 
-Para detalle de uso, orden por etapas y parametros:
-[scripts/README.md](scripts/README.md)
+Activar el entorno primero (venv o conda, ver seccion anterior), luego:
+
+```bash
+python scripts/csv_to_parquet.py        # CSV → Parquet
+python scripts/create_temporal_split.py # split dev / holdout_3m
+```
+
+### Sprint 2 — Pipeline reproducible completo
+
+**Con venv activo:**
+```bash
+bash scripts/build_features.sh
+```
+
+**Con conda (sin activar el env):**
+```bash
+CONDA_ENV=ai-miadas bash scripts/build_features.sh
+```
+
+El script detecta automaticamente el entorno: `CONDA_ENV` definido → conda, `.venv` en la raiz → venv, de lo contrario usa el `python` en PATH.
+
+Ejecuta en orden los 6 pasos: master table dev → features → seleccion experimental → evaluacion vs baseline → master table holdout → features holdout.
+
+Pasos individuales (con el entorno activado):
+
+```bash
+# [1/4] Master table DEV (umbral P80 = 197.01, modo fit)
+python src/data/build_master_table.py --profile-source dev --threshold-mode auto
+
+# [2/4] Features RFM DEV (18 variables nuevas → 51 columnas)
+python src/features/build_rfm_features.py
+
+# [3/4] Seleccion experimental (8 experimentos → ganador corr_le_0.85, 28 features)
+python src/features/feature_selection_experiments.py
+
+# [4/4] Evaluacion vs baseline Sprint 1 (split temporal 2018-07-01)
+python src/models/evaluate_model.py
+
+# [5/6] Master table HOLDOUT — simulacion mensual ago-oct 2018 (umbral apply)
+python src/data/build_master_table.py --profile-source holdout --threshold-mode apply
+
+# [6/6] Features RFM HOLDOUT
+python src/features/build_rfm_features.py \
+    --input-path data/processed/03_master_table_clean_holdout.parquet \
+    --output-path data/processed/holdout_features_rfm.parquet \
+    --metadata-path data/processed/holdout_features_rfm_metadata.json
+```
+
+Para detalle de parametros y artefactos generados: [scripts/README.md](scripts/README.md)
 
 ## 🗺️ Esquema de datos
 
@@ -144,5 +205,5 @@ Para detalle de uso, orden por etapas y parametros:
 ## 🚧 Estado del proyecto
 
 En desarrollo academico por sprints.
-Estado actual: **Sprint 1** (definicion del problema, EDA inicial,
-master table y baseline logistico).
+Estado actual: **Sprint 2 completado** (pipeline reproducible,
+features, seleccion experimental, metricas y KPIs finales).

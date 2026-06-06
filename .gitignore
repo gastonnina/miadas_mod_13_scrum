@@ -76,7 +76,9 @@ models/*.joblib
 models/*.onnx
 
 # Temporary generated datasets
-data/interim/*
+# En esta etapa academica se versionan artefactos intermedios del pipeline.
+# Si mas adelante se vuelve demasiado pesado, esta regla puede reactivarse.
+# data/interim/*
 data/processed/*.csv
 
 # Keep folder structure
@@ -140,4 +142,5 @@ htmlcov/
 notebooks/sprint_01_eda/*.pdf
 
 # Plan markdown files (case variants)
-*[Pp][Ll][Aa][Nn]*.md
+# En esta etapa academica los planes markdown se versionan.
+# *[Pp][Ll][Aa][Nn]*.md
