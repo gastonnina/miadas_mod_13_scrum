@@ -21,7 +21,7 @@
 
 ## 3. Modelo Final: LightGBM (tuneado)
 
-**Archivo:** `C:\Users\marce\Documents\Code\Maestria\m13\miadas_mod_13_scrum\models\final\modelo_final.pkl`  
+**Archivo:** `models/final/modelo_final.pkl`  
 **ROC-AUC val:** 0.8081  
 **Gap overfit:** 0.0385
 
