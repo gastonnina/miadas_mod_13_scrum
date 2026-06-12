@@ -47,6 +47,8 @@ def main() -> None:
 
     orders["order_purchase_timestamp"] = pd.to_datetime(orders["order_purchase_timestamp"])
 
+    # Primer corte temporal del proyecto:
+    # dev = historico hasta julio 2018, holdout = agosto a octubre 2018.
     orders_dev = orders[orders["order_purchase_timestamp"] <= dev_end].copy()
     orders_holdout = orders[
         (orders["order_purchase_timestamp"] >= holdout_start)
@@ -75,6 +77,8 @@ def main() -> None:
     )
 
     if exclude_holdout_customers:
+        # Modo mas estricto: si un cliente aparece en holdout, se elimina por
+        # completo de dev para evitar compartir identidad entre ventanas.
         holdout_customer_id_set = set(holdout_customer_ids)
         orders_dev = orders_dev.merge(
             customers[["customer_id", "customer_unique_id"]],

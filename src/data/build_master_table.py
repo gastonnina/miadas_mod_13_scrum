@@ -77,6 +77,8 @@ def load_dataset(config: BuildConfig, file_stem: str, force_raw: bool = False) -
         "dev": config.split_dev_dir,
         "holdout": config.split_holdout_dir,
     }
+    # Algunas tablas son transaccionales y deben salir del split temporal;
+    # otras son maestras de referencia y siempre se leen desde raw.
     source_dir = config.raw_dir if force_raw else (
         config.raw_dir if config.profile_source == "raw" else split_dirs[config.profile_source]
     )
@@ -166,6 +168,8 @@ def build_orders_enriched(datasets: dict[str, pd.DataFrame]) -> pd.DataFrame:
         .merge(order_reviews, on="order_id", how="left")
     )
 
+    # Enriquecemos cada orden con señales operativas que luego se agregaran
+    # a nivel cliente para construir el perfil final de modelado.
     orders_enriched["delivery_days"] = (
         orders_enriched["order_delivered_customer_date"] - orders_enriched["order_purchase_timestamp"]
     ).dt.days
@@ -270,12 +274,15 @@ def build_customer_geo(customers: pd.DataFrame) -> pd.DataFrame:
 def add_target(master_table: pd.DataFrame) -> tuple[pd.DataFrame, float]:
     threshold = float(master_table["total_spent"].quantile(0.80))
     result = master_table.copy()
+    # La regla de negocio define premium como el top 20% por gasto total.
     result["is_premium"] = np.where(result["total_spent"] >= threshold, 1, 0)
     return result, threshold
 
 
 def apply_fixed_target(master_table: pd.DataFrame, threshold: float) -> pd.DataFrame:
     result = master_table.copy()
+    # En holdout no recalculamos P80: reutilizamos el umbral de dev para
+    # mantener comparabilidad temporal y evitar leakage hacia el futuro.
     result["is_premium"] = np.where(result["total_spent"] >= threshold, 1, 0)
     return result
 
@@ -297,6 +304,8 @@ def build_master_table(
     )
 
     master_table_clean = master_table_raw.copy()
+    # Solo imputamos a cero columnas de conteo, tasas y montos agregados donde
+    # "sin actividad" es semanticamente equivalente a 0 en esta etapa.
     master_table_clean[FILL_ZERO_COLUMNS] = master_table_clean[FILL_ZERO_COLUMNS].fillna(0)
     if fixed_threshold is None:
         master_table_clean, threshold = add_target(master_table_clean)
@@ -488,6 +497,7 @@ def main() -> None:
     if args.threshold_mode in {"apply", "auto"} and threshold_metadata_path.exists():
         metadata = load_threshold_metadata(threshold_metadata_path)
         fixed_threshold = float(metadata["premium_threshold"])
+        # auto se comporta como apply si ya existe un umbral persistido.
         if args.threshold_mode == "auto":
             threshold_mode_used = "apply"
     elif args.threshold_mode == "apply":
@@ -495,6 +505,7 @@ def main() -> None:
             f"No existe metadata de umbral en {threshold_metadata_path} para usar threshold-mode=apply"
         )
     elif args.threshold_mode == "auto":
+        # Si no existe metadata previa, auto cae a fit y genera el umbral.
         threshold_mode_used = "fit"
 
     master_table_raw, master_table_clean, threshold = build_master_table(

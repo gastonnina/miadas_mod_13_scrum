@@ -66,7 +66,33 @@ Este directorio contiene scripts de soporte para ingesta, EDA, splits temporales
 
 4. Entrenamiento de modelos (Sprint 3)
 - `train_model.sh`
-  - Ejecuta entrenamiento de modelos sobre las features seleccionadas del Sprint 2.
+  - Reservado. Actualmente no esta implementado.
+- `../src/models/run_phase1_notebook_artifacts.py`
+  - Script oficial actual para generar los artefactos `.pkl` del Sprint 3 a partir de `06_features_selected.parquet`.
+  - Entrena 4 variantes y persiste pipelines serializados listos para carga posterior.
+
+  ```bash
+  python src/models/run_phase1_notebook_artifacts.py
+  ```
+
+  Artefactos generados:
+  - `models/baseline/lightgbm_baseline.pkl`
+  - `models/baseline/xgboost_baseline.pkl`
+  - `models/final/lightgbm_tuned.pkl`
+  - `models/final/xgboost_tuned.pkl`
+  - `data/processed/13_phase1_summary.json`
+  - `reports/sprint_03/phase1_model_artifacts.md`
+- `src/models/compare_models.py`
+  - Compara varios clasificadores sobre el mismo split temporal del proyecto antes de optimizar hiperparámetros.
+  - Modelos incluidos: regresión logística, árbol de decisión, random forest, SVM lineal calibrado, extra trees y XGBoost.
+
+  ```bash
+  python3 src/models/compare_models.py
+  ```
+
+  Artefactos generados:
+  - `data/processed/09_model_comparison.json`
+  - `reports/sprint_03/comparacion_modelos.md`
 
 5. Ejecución de análisis y aplicaciones
 - `run_eda.sh`
