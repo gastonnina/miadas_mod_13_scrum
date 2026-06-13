@@ -120,24 +120,35 @@ Sprint 1 (`EDA + baseline`):
 - Notebook EDA raw data: [notebooks/sprint_01_eda/00_eda_raw_data.ipynb](notebooks/sprint_01_eda/00_eda_raw_data.ipynb)
 - Notebook master table: [notebooks/sprint_01_eda/01_build_master_table.ipynb](notebooks/sprint_01_eda/01_build_master_table.ipynb)
 - Notebook EDA premium: [notebooks/sprint_01_eda/02_eda_premium_customers.ipynb](notebooks/sprint_01_eda/02_eda_premium_customers.ipynb)
-- Hipotesis, target y metricas: [reports/sprint_01/documento_hipotesis_target_metricas.md](reports/sprint_01/documento_hipotesis_target_metricas.md)
-- Storytelling breve: [reports/sprint_01/storytelling_breve.md](reports/sprint_01/storytelling_breve.md)
 - Reporte Sprint 1 (PDF): [reports/sprint_01/informes/sprint_01_reporte.pdf](reports/sprint_01/informes/sprint_01_reporte.pdf)
 - Presentacion final Sprint 1 (PDF): [reports/sprint_01/informes/sprint_01_presentacion.pdf](reports/sprint_01/informes/sprint_01_presentacion.pdf)
 
 Sprint 2 (`pipeline de features`):
 - Estado: `Completado`
-- Plan y checklist: [reports/sprint_02/plan_implementacion_sprint_2.md](reports/sprint_02/plan_implementacion_sprint_2.md)
 - DAG tecnico reproducible: [reports/sprint_02/dag_pipeline_sprint_2.md](reports/sprint_02/dag_pipeline_sprint_2.md)
 - Documentacion del pipeline: [reports/sprint_02/documentacion_pipeline.md](reports/sprint_02/documentacion_pipeline.md)
+- Experimentos de seleccion de variables: [reports/sprint_02/feature_selection_experiments.md](reports/sprint_02/feature_selection_experiments.md)
 - Notebook integrador: [notebooks/sprint_02_pipeline/02_pipeline_features.ipynb](notebooks/sprint_02_pipeline/02_pipeline_features.ipynb)
 - Evaluacion vs baseline: [reports/sprint_02/evaluation_vs_baseline.md](reports/sprint_02/evaluation_vs_baseline.md)
+- Preguntas y respuestas de codigo: [reports/sprint_02/preguntas_respuestas_codigo_sprint_2.md](reports/sprint_02/preguntas_respuestas_codigo_sprint_2.md)
+- Reporte Sprint 2 (PDF): [reports/sprint_02/informes/sprint_02_reporte.pdf](reports/sprint_02/informes/sprint_02_reporte.pdf)
+- Presentacion Sprint 2 (PDF): [reports/sprint_02/informes/sprint_02_presentacion.pdf](reports/sprint_02/informes/sprint_02_presentacion.pdf)
+- Presentacion editable Sprint 2 (PPTX): [reports/sprint_02/presentacion_sprint_2.pptx](reports/sprint_02/presentacion_sprint_2.pptx)
 
 Sprint 3 (`modelado y comparacion`):
-- Estado: `En progreso`
+- Estado: `Completado`
+- Benchmark exploratorio: [notebooks/sprint_03_modeling/00_exploracion_benchmark.ipynb](notebooks/sprint_03_modeling/00_exploracion_benchmark.ipynb)
+- Comparacion de modelos: [reports/sprint_03/comparacion_modelos.md](reports/sprint_03/comparacion_modelos.md)
+- Comparacion de modelos (resumen ejecutivo): [reports/sprint_03/comparacion_modelos_gas.md](reports/sprint_03/comparacion_modelos_gas.md)
+- Resultados de tuning: [reports/sprint_03/tuning_results.md](reports/sprint_03/tuning_results.md)
+- Artefactos generados del modelado: [reports/sprint_03/phase1_model_artifacts.md](reports/sprint_03/phase1_model_artifacts.md)
+- Informe Sprint 3: [reports/sprint_03/informe_sprint_3.md](reports/sprint_03/informe_sprint_3.md)
+- Reporte Sprint 3 (PDF): [reports/sprint_03/informes/sprint_03_reporte.pdf](reports/sprint_03/informes/sprint_03_reporte.pdf)
+- Presentacion Sprint 3 (PDF): [reports/sprint_03/informes/sprint_3_presentacion.pdf](reports/sprint_03/informes/sprint_3_presentacion.pdf)
 
 Sprint 4 (`integracion y demo`):
 - Estado: `Pendiente`
+- Entregables finales previstos: informe etico/gobernanza y pitch de demo day
 
 ## 🚀 Scripts de ejecucion
 
@@ -231,5 +242,5 @@ Nota: `scripts/train_model.sh` aun no esta implementado; por ahora la fuente ofi
 ## 🚧 Estado del proyecto
 
 En desarrollo academico por sprints.
-Estado actual: **Sprint 2 completado** (pipeline reproducible,
-features, seleccion experimental, metricas y KPIs finales).
+Estado actual: **Sprint 3 completado**,
+con informes y presentaciones consolidadas hasta Sprint 3.
