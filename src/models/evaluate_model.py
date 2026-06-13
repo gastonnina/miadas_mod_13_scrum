@@ -68,7 +68,8 @@ def build_model(numeric_features: list[str], categorical_features: list[str]) ->
 
 
 def split_feature_types(df: pd.DataFrame, features: list[str]) -> tuple[list[str], list[str]]:
-    categorical = df[features].select_dtypes(include=["object"]).columns.tolist()
+    # Compatibilidad con pandas actuales y futuros: distinguir object, string y category.
+    categorical = df[features].select_dtypes(include=["object", "string", "category"]).columns.tolist()
     numeric = [col for col in features if col not in categorical]
     return numeric, categorical
 
@@ -76,6 +77,7 @@ def split_feature_types(df: pd.DataFrame, features: list[str]) -> tuple[list[str
 def evaluate_predictions(y_true: pd.Series, y_scores: pd.Series, threshold: float = 0.5) -> dict[str, float | list[list[int]] | list[float]]:
     y_pred = (y_scores >= threshold).astype(int)
     roc_auc = float(roc_auc_score(y_true, y_scores))
+    # Gini es una reexpresion lineal del AUC y resume la misma capacidad de separacion.
     gini = (2 * roc_auc) - 1
     cm = confusion_matrix(y_true, y_pred).tolist()
     fpr, tpr, roc_thresholds = roc_curve(y_true, y_scores)
@@ -117,6 +119,8 @@ def main() -> None:
     df = selected_df.merge(source_df, on=ID_COLUMN, how="left", validate="one_to_one")
 
     cutoff = pd.Timestamp(args.validation_cutoff)
+    # La evaluacion final respeta un corte temporal: entrenamos con pasado y
+    # validamos con clientes cuya ultima compra cae en la ventana mas reciente.
     train_df = df[df["last_purchase"] < cutoff].copy()
     val_df = df[df["last_purchase"] >= cutoff].copy()
     if train_df.empty or val_df.empty:

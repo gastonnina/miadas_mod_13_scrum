@@ -1,0 +1,125 @@
+{
+  "sprint": 3,
+  "task": "S3-DS-01",
+  "split": {
+    "train_cutoff": "2018-07-01",
+    "train_rows": 83589,
+    "val_rows": 6230,
+    "train_positive_rate": 0.2129,
+    "val_positive_rate": 0.2283
+  },
+  "features": {
+    "total": 28,
+    "numeric": 23,
+    "categorical": 5,
+    "names": [
+      "total_orders",
+      "total_items",
+      "total_products",
+      "avg_review_score",
+      "avg_delivery_days",
+      "avg_estimated_delivery_days",
+      "delivered_orders",
+      "late_deliveries",
+      "payment_methods_count",
+      "max_payment_installments",
+      "recency_days",
+      "customer_lifetime_days",
+      "cancellation_rate",
+      "products_per_order",
+      "max_to_avg_price_ratio",
+      "installments_gt_1_flag",
+      "installments_gt_6_flag",
+      "credit_card_flag",
+      "voucher_flag",
+      "delivery_gap",
+      "reviews_per_order",
+      "far_region_flag",
+      "top_category_is_high_value",
+      "customer_state",
+      "main_payment_type",
+      "top_category",
+      "region_group",
+      "top_category_group"
+    ]
+  },
+  "results": [
+    {
+      "model_name": "lightgbm",
+      "roc_auc_val": 0.803485,
+      "gini_val": 0.60697,
+      "pr_auc_val": 0.595401,
+      "f1_val": 0.556471,
+      "precision_val": 0.478261,
+      "recall_val": 0.66526,
+      "roc_auc_train": 0.840534,
+      "gini_train": 0.681068,
+      "f1_train": 0.573858,
+      "overfit_gap": 0.037
+    },
+    {
+      "model_name": "gradient_boosting",
+      "roc_auc_val": 0.798491,
+      "gini_val": 0.596983,
+      "pr_auc_val": 0.588065,
+      "f1_val": 0.452381,
+      "precision_val": 0.70059,
+      "recall_val": 0.334037,
+      "roc_auc_train": 0.825842,
+      "gini_train": 0.651685,
+      "f1_train": 0.506003,
+      "overfit_gap": 0.0274
+    },
+    {
+      "model_name": "xgboost",
+      "roc_auc_val": 0.798211,
+      "gini_val": 0.596423,
+      "pr_auc_val": 0.589617,
+      "f1_val": 0.550448,
+      "precision_val": 0.457596,
+      "recall_val": 0.690577,
+      "roc_auc_train": 0.827256,
+      "gini_train": 0.654513,
+      "f1_train": 0.55741,
+      "overfit_gap": 0.029
+    },
+    {
+      "model_name": "random_forest",
+      "roc_auc_val": 0.792617,
+      "gini_val": 0.585235,
+      "pr_auc_val": 0.567715,
+      "f1_val": 0.542201,
+      "precision_val": 0.470741,
+      "recall_val": 0.639241,
+      "roc_auc_train": 0.811765,
+      "gini_train": 0.623531,
+      "f1_train": 0.552761,
+      "overfit_gap": 0.0191
+    },
+    {
+      "model_name": "logistic_regression",
+      "roc_auc_val": 0.788423,
+      "gini_val": 0.576846,
+      "pr_auc_val": 0.566084,
+      "f1_val": 0.532946,
+      "precision_val": 0.453782,
+      "recall_val": 0.64557,
+      "roc_auc_train": 0.804072,
+      "gini_train": 0.608144,
+      "f1_train": 0.540295,
+      "overfit_gap": 0.0156
+    }
+  ],
+  "finalists": {
+    "selected": [
+      "lightgbm",
+      "xgboost"
+    ],
+    "selection_criteria": {
+      "min_roc_auc_val": 0.78,
+      "min_gini_val": 0.56,
+      "max_overfit_gap": 0.06,
+      "ranking": "composite_score = 0.5*roc_auc_val + 0.3*gini_val + 0.2*f1_val"
+    }
+  }
+}

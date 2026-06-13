@@ -54,7 +54,8 @@ def mandatory_base_features(df: pd.DataFrame) -> list[str]:
 
 def split_feature_types(df: pd.DataFrame, features: list[str]) -> tuple[list[str], list[str]]:
     subset = df[features]
-    categorical = subset.select_dtypes(include=["object"]).columns.tolist()
+    # Pandas 3 separa de forma explícita los dtypes string de object.
+    categorical = subset.select_dtypes(include=["object", "string", "category"]).columns.tolist()
     numeric = [col for col in features if col not in categorical]
     return numeric, categorical
 
@@ -140,6 +141,8 @@ def filter_by_correlation(train_df: pd.DataFrame, features: list[str], threshold
     signal = absolute_target_signal(train_df, numeric_features)
     selected = numeric_features.copy()
 
+    # Si dos variables numericas son demasiado parecidas, conservamos la que
+    # muestra mayor señal absoluta frente al target y descartamos la otra.
     for i, left in enumerate(numeric_features):
         if left not in selected:
             continue
@@ -227,6 +230,8 @@ def choose_best_experiment(results: pd.DataFrame) -> str:
     ranked["overfit_gap"] = ranked["auc_train"] - ranked["auc_val"]
     best_auc = float(ranked["auc_val"].max())
     tolerance = 0.002
+    # No elegimos solo por AUC maximo: primero armamos una "zona aceptable"
+    # cercana al mejor resultado y luego privilegiamos parsimonia y estabilidad.
     candidates = ranked[ranked["auc_val"] >= (best_auc - tolerance)].copy()
     candidates = candidates.sort_values(
         ["n_features", "overfit_gap", "auc_val"],
@@ -304,6 +309,8 @@ def main() -> None:
     if train_df.empty or val_df.empty:
         raise ValueError("El corte temporal dejo train o validation vacio. Ajusta validation-cutoff.")
     if args.max_train_rows and len(train_df) > args.max_train_rows:
+        # La bateria experimental prueba 8 configuraciones; limitamos train para
+        # acelerar comparaciones sin alterar la distribucion de la clase.
         _, train_df = train_test_split(
             train_df,
             train_size=args.max_train_rows,

@@ -134,7 +134,7 @@ Sprint 2 (`pipeline de features`):
 - Evaluacion vs baseline: [reports/sprint_02/evaluation_vs_baseline.md](reports/sprint_02/evaluation_vs_baseline.md)
 
 Sprint 3 (`modelado y comparacion`):
-- Estado: `Pendiente`
+- Estado: `En progreso`
 
 Sprint 4 (`integracion y demo`):
 - Estado: `Pendiente`
@@ -192,6 +192,29 @@ python src/features/build_rfm_features.py \
 ```
 
 Para detalle de parametros y artefactos generados: [scripts/README.md](scripts/README.md)
+
+### Sprint 3 — Generacion de modelos `.pkl`
+
+El script operativo que hoy genera los artefactos serializados de modelos es:
+
+```bash
+python src/models/run_phase1_notebook_artifacts.py
+```
+
+Genera estos `.pkl`:
+
+- `models/baseline/lightgbm_baseline.pkl`
+- `models/baseline/xgboost_baseline.pkl`
+- `models/final/lightgbm_tuned.pkl`
+- `models/final/xgboost_tuned.pkl`
+
+Tambien persiste:
+
+- `data/processed/13_phase1_summary.json`
+- `reports/sprint_03/phase1_model_artifacts.md`
+- tablas de importancias y auditoria de features en `data/processed/`
+
+Nota: `scripts/train_model.sh` aun no esta implementado; por ahora la fuente oficial para generar los `.pkl` es `src/models/run_phase1_notebook_artifacts.py`.
 
 ## 🗺️ Esquema de datos
 
