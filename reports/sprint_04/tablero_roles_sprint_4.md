@@ -13,8 +13,7 @@ La logica del sprint sigue esta secuencia:
 ## Fechas del sprint
 
 - Inicio operativo: `miercoles, 17 de junio de 2026`
-- Cierre tecnico esperado: `sabado, 20 de junio de 2026`
-- Cierre documental y presentacion: `domingo, 21 de junio de 2026`
+- Cierre esperado de tickets: `jueves, 18 de junio de 2026`
 
 ## Version compacta para tablero
 
@@ -159,7 +158,7 @@ Depende de:
 
 Deadline:
 - abre: `miercoles, 17 de junio de 2026, 12:00`
-- pendiente: `jueves, 18 de junio de 2026, 12:00`
+- pendiente: `jueves, 18 de junio de 2026, 10:00`
 
 ### S4-DE-02 | Construir MVP en Streamlit
 
@@ -210,7 +209,7 @@ Depende de:
 
 Deadline:
 - abre: `jueves, 18 de junio de 2026, 12:00`
-- pendiente: `viernes, 19 de junio de 2026, 18:00`
+- pendiente: `jueves, 18 de junio de 2026, 18:00`
 
 ### S4-DS-03 | Consolidar metricas de negocio
 
@@ -232,8 +231,8 @@ Depende de:
 - `S4-DS-01`
 
 Deadline:
-- abre: `viernes, 19 de junio de 2026, 00:00`
-- pendiente: `viernes, 19 de junio de 2026, 23:59`
+- abre: `jueves, 18 de junio de 2026, 08:00`
+- pendiente: `jueves, 18 de junio de 2026, 20:00`
 
 ### S4-DE-03 | Dockerizar MVP Streamlit
 
@@ -256,8 +255,8 @@ Depende de:
 - `S4-DE-02`
 
 Deadline:
-- abre: `viernes, 19 de junio de 2026, 12:00`
-- pendiente: `sabado, 20 de junio de 2026, 12:00`
+- abre: `jueves, 18 de junio de 2026, 08:00`
+- pendiente: `jueves, 18 de junio de 2026, 23:00`
 
 ### S4-DPO-01 | Redactar informe etico y gobernanza
 
@@ -283,8 +282,8 @@ Depende de:
 - `S4-DS-03`
 
 Deadline:
-- abre: `sabado, 20 de junio de 2026, 00:00`
-- pendiente: `domingo, 21 de junio de 2026, 10:00`
+- abre: `jueves, 18 de junio de 2026, 08:00`
+- pendiente: `jueves, 18 de junio de 2026, 20:00`
 
 ### S4-DPO-02 | Preparar storytelling y pitch Demo Day
 
@@ -310,8 +309,8 @@ Depende de:
 - `S4-DPO-01`
 
 Deadline:
-- abre: `sabado, 20 de junio de 2026, 12:00`
-- pendiente: `domingo, 21 de junio de 2026, 15:00`
+- abre: `jueves, 18 de junio de 2026, 12:00`
+- pendiente: `jueves, 18 de junio de 2026, 22:00`
 
 ### S4-DPO-03 | Ejecutar checklist y cierre final
 
@@ -336,8 +335,8 @@ Depende de:
 - `S4-DPO-02`
 
 Deadline:
-- abre: `domingo, 21 de junio de 2026, 15:00`
-- pendiente: `domingo, 21 de junio de 2026, 18:00`
+- abre: `jueves, 18 de junio de 2026, 18:00`
+- pendiente: `jueves, 18 de junio de 2026, 23:59`
 
 ### S4-DE-04 | API minima como stretch goal
 
@@ -358,8 +357,8 @@ Depende de:
 - `S4-DE-03`
 
 Deadline:
-- abre: `domingo, 21 de junio de 2026, 10:00`
-- pendiente: `domingo, 21 de junio de 2026, 18:00`
+- abre: `jueves, 18 de junio de 2026, 18:00`
+- pendiente: `jueves, 18 de junio de 2026, 23:59`
 
 ## Lectura operativa
 

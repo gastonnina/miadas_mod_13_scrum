@@ -66,7 +66,7 @@ La API puede quedar como:
 
 ## Objetivo del sprint
 
-Entregar entre el `17 de junio de 2026` y el `20 de junio de 2026` un MVP navegable para demostrar la identificacion de clientes premium, junto con su narrativa de negocio, consideraciones eticas y empaque reproducible con Docker, reutilizando el pipeline actual para transformar datos de entrada antes del scoring.
+Entregar entre el `17 de junio de 2026` y el `18 de junio de 2026` un MVP navegable para demostrar la identificacion de clientes premium, junto con su narrativa de negocio, consideraciones eticas y empaque reproducible con Docker, reutilizando el pipeline actual para transformar datos de entrada antes del scoring.
 
 ## Entregables comprometidos
 
