@@ -32,6 +32,11 @@ MASTER_PATH = PROJECT_ROOT / "data" / "processed" / "03_master_table_clean_holdo
 DEMO_SAMPLE_PATH = PROJECT_ROOT / "data" / "processed" / "demo_sample_scoring.parquet"
 
 THRESHOLD = 0.55
+COLOR_PREMIUM = "#39a96b"
+COLOR_RISK = "#d95d39"
+COLOR_NEUTRAL = "#5b7c99"
+COLOR_TEXT = "#213547"
+CMAP_CONFUSION = "GnBu"
 
 # Metricas pre-computadas en notebook 04_demo_validation.ipynb (holdout_3m, umbral 0.55)
 HOLDOUT_METRICS = {
@@ -52,6 +57,16 @@ HOLDOUT_METRICS = {
     "cost_savings": 1_416_555.00,
     "n_pred_premium": 1_659,
     "tp_count": 715,
+}
+
+SPRINT3_VALIDATION_METRICS = {
+    "roc_auc": 0.8081,
+    "gini": 0.6162,
+    "pr_auc": 0.6010,
+    "precision": 0.5225,
+    "recall": 0.6041,
+    "f1": 0.5603,
+    "threshold": 0.55,
 }
 
 
@@ -104,9 +119,9 @@ def render_contribution_chart(contrib: pd.Series, title: str) -> None:
     combined = pd.concat([top5, bot5.iloc[::-1]])
 
     fig, ax = plt.subplots(figsize=(10, 4))
-    colors = ["#27ae60" if v >= 0 else "#e74c3c" for v in combined]
+    colors = [COLOR_PREMIUM if v >= 0 else COLOR_RISK for v in combined]
     ax.barh(combined.index, combined.values, color=colors, edgecolor="white")
-    ax.axvline(0, color="#333333", linewidth=0.8)
+    ax.axvline(0, color=COLOR_NEUTRAL, linewidth=0.8)
     ax.set_xlabel("Contribucion al score (log-odds)")
     ax.set_title(title)
     ax.invert_yaxis()
@@ -129,12 +144,63 @@ def safe_float_metric(value, default: str = "N/A") -> str:
     return f"{float(value):,.2f}"
 
 
+@st.cache_data(show_spinner="Calculando scores del holdout completo...")
+def build_holdout_selector_frame(_pipeline, df: pd.DataFrame, selected_cols: list[str]) -> pd.DataFrame:
+    """Precalcula score y etiquetas para un selector mas util del holdout."""
+    enriched = df[["customer_unique_id", "is_premium"]].copy()
+    enriched["row_idx"] = df.index.astype(int)
+    enriched["premium_probability"] = _pipeline.predict_proba(df[selected_cols])[:, 1]
+    enriched["is_pred_premium"] = enriched["premium_probability"] >= THRESHOLD
+    enriched["selection_bucket"] = "Todos"
+    enriched.loc[enriched["is_premium"] == 1, "selection_bucket"] = "Premium reales"
+    enriched.loc[enriched["is_pred_premium"], "selection_bucket"] = "Premium predichos"
+    return enriched
+
+
+def format_holdout_option(option_row: pd.Series) -> str:
+    real_label = "PREM" if int(option_row["is_premium"]) == 1 else "REG"
+    pred_label = "PREM" if bool(option_row["is_pred_premium"]) else "REG"
+    return (
+        f"{int(option_row['row_idx']):>5} | "
+        f"{str(option_row['customer_unique_id'])[:12]}... | "
+        f"prob={option_row['premium_probability']:.1%} | "
+        f"real={real_label} | pred={pred_label}"
+    )
+
+
+def get_confusion_counts() -> dict[str, int]:
+    tp = int(HOLDOUT_METRICS["tp_count"])
+    fp = int(HOLDOUT_METRICS["n_pred_premium"] - tp)
+    fn = int(HOLDOUT_METRICS["n_premium"] - tp)
+    tn = int(HOLDOUT_METRICS["n_total"] - tp - fp - fn)
+    return {"tp": tp, "fp": fp, "fn": fn, "tn": tn}
+
+
 # ── App principal ────────────────────────────────────────────────────────────
 def main() -> None:
     st.set_page_config(
         page_title="MVP Clientes Premium",
         layout="wide",
         initial_sidebar_state="expanded",
+    )
+    st.markdown(
+        f"""
+        <style>
+        .stMetric {{
+            border: 1px solid rgba(91, 124, 153, 0.18);
+            border-radius: 14px;
+            padding: 0.35rem 0.6rem 0.5rem 0.6rem;
+            background: rgba(255,255,255,0.02);
+        }}
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: 0.5rem;
+        }}
+        .stTabs [data-baseweb="tab"] {{
+            border-bottom: 2px solid transparent;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
     )
 
     st.title("Identificacion de Clientes Premium")
@@ -166,6 +232,8 @@ def main() -> None:
         st.error(f"Columnas faltantes en el dataset: {missing_cols}")
         st.stop()
 
+    holdout_selector_df = build_holdout_selector_frame(pipeline, df, selected_cols)
+
     # ── Sidebar ──────────────────────────────────────────────────────────────
     with st.sidebar:
         st.header("Selector de cliente")
@@ -186,15 +254,120 @@ def main() -> None:
             cid = opciones[seleccion]
             row = df[df["customer_unique_id"] == cid]
         else:
-            idx = st.number_input(
-                "Indice de registro (0 a 96 095)",
-                min_value=0,
-                max_value=len(df) - 1,
-                value=0,
-                step=1,
+            filtro = st.selectbox(
+                "Segmento a explorar",
+                [
+                    "Premium predichos",
+                    "Premium reales",
+                    "Todos",
+                ],
             )
-            row = df.iloc[[int(idx)]]
-            cid = row["customer_unique_id"].values[0]
+            orden = st.selectbox(
+                "Orden",
+                ["Mayor score", "Menor score", "Indice original"],
+            )
+            search_text = st.text_input(
+                "Buscar por prefijo de customer_unique_id",
+                value="",
+                placeholder="Ej: 861eff47",
+            ).strip().lower()
+
+            filtered = holdout_selector_df.copy()
+            if filtro == "Premium predichos":
+                filtered = filtered[filtered["is_pred_premium"]]
+            elif filtro == "Premium reales":
+                filtered = filtered[filtered["is_premium"] == 1]
+            if search_text:
+                filtered = filtered[
+                    filtered["customer_unique_id"].str.lower().str.contains(search_text, na=False)
+                ]
+
+            if orden == "Mayor score":
+                filtered = filtered.sort_values("premium_probability", ascending=False)
+            elif orden == "Menor score":
+                filtered = filtered.sort_values("premium_probability", ascending=True)
+            else:
+                filtered = filtered.sort_values("row_idx", ascending=True)
+
+            st.caption(f"Coincidencias: {len(filtered):,}")
+
+            if filtered.empty:
+                st.warning("No hay clientes que coincidan con ese filtro.")
+                st.stop()
+
+            max_options = min(len(filtered), 200)
+            visibles = st.slider(
+                "Cantidad de candidatos visibles",
+                min_value=10,
+                max_value=max_options,
+                value=min(50, max_options),
+                step=10,
+            )
+            filtered = filtered.head(visibles)
+
+            option_ids = filtered["customer_unique_id"].tolist()
+            option_map = {
+                cid_option: format_holdout_option(filtered.loc[filtered["customer_unique_id"] == cid_option].iloc[0])
+                for cid_option in option_ids
+            }
+            selected_cid = st.selectbox(
+                "Cliente del holdout",
+                option_ids,
+                format_func=lambda cid_option: option_map[cid_option],
+            )
+
+            with st.expander("Modo tecnico y analisis avanzado"):
+                advanced_filter = st.selectbox(
+                    "Explorar errores/aciertos del modelo",
+                    [
+                        "Sin cambiar seleccion actual",
+                        "Aciertos premium (TP)",
+                        "Falsos positivos (FP)",
+                        "Falsos negativos (FN)",
+                    ],
+                )
+                advanced_df = holdout_selector_df.copy()
+                if advanced_filter == "Aciertos premium (TP)":
+                    advanced_df = advanced_df[
+                        (advanced_df["is_premium"] == 1) & (advanced_df["is_pred_premium"])
+                    ]
+                elif advanced_filter == "Falsos positivos (FP)":
+                    advanced_df = advanced_df[
+                        (advanced_df["is_premium"] == 0) & (advanced_df["is_pred_premium"])
+                    ]
+                elif advanced_filter == "Falsos negativos (FN)":
+                    advanced_df = advanced_df[
+                        (advanced_df["is_premium"] == 1) & (~advanced_df["is_pred_premium"])
+                    ]
+
+                if advanced_filter != "Sin cambiar seleccion actual":
+                    st.caption(f"Coincidencias tecnicas: {len(advanced_df):,}")
+                    advanced_df = advanced_df.sort_values("premium_probability", ascending=False).head(50)
+                    advanced_ids = advanced_df["customer_unique_id"].tolist()
+                    advanced_map = {
+                        cid_option: format_holdout_option(
+                            advanced_df.loc[advanced_df["customer_unique_id"] == cid_option].iloc[0]
+                        )
+                        for cid_option in advanced_ids
+                    }
+                    selected_cid = st.selectbox(
+                        "Cliente tecnico",
+                        advanced_ids,
+                        format_func=lambda cid_option: advanced_map[cid_option],
+                    )
+
+                idx = st.number_input(
+                    "Indice de registro (0 a 96 095)",
+                    min_value=0,
+                    max_value=len(df) - 1,
+                    value=int(filtered.iloc[0]["row_idx"]),
+                    step=1,
+                )
+                if st.button("Ir a indice"):
+                    selected_cid = df.iloc[int(idx)]["customer_unique_id"]
+
+            cid = selected_cid
+            row = df[df["customer_unique_id"] == cid]
 
         st.divider()
         st.markdown("**Estadisticas del holdout**")
@@ -221,8 +394,8 @@ def main() -> None:
     is_true_premium = int(row["is_premium"].values[0]) if "is_premium" in row.columns else None
 
     # ── Tabs ─────────────────────────────────────────────────────────────────
-    tab_scoring, tab_metricas = st.tabs(
-        ["Scoring Individual", "Metricas del Modelo"]
+    tab_scoring, tab_validacion, tab_holdout = st.tabs(
+        ["Scoring Individual", "Validacion Sprint 3", "Holdout y ROI"]
     )
 
     # ─── Tab 1: Scoring individual ─────────────────────────────────────────
@@ -286,17 +459,67 @@ def main() -> None:
             feature_display = X.T.rename(columns={X.index[0]: "Valor"}).astype(str)
             st.dataframe(feature_display, width="stretch")
 
-    # ─── Tab 2: Metricas del modelo ────────────────────────────────────────
-    with tab_metricas:
-        m = HOLDOUT_METRICS
+    # ─── Tab 2: Validacion metodologica Sprint 3 ──────────────────────────
+    with tab_validacion:
+        s3 = SPRINT3_VALIDATION_METRICS
 
-        st.subheader("Metricas tecnicas (holdout_3m, umbral 0.55)")
+        st.subheader("Referencia metodologica del modelo final")
+        st.caption(
+            "Estas metricas corresponden a la validacion temporal oficial del Sprint 3. "
+            "Son la referencia principal para juzgar generalizacion del modelo."
+        )
+        v1, v2, v3, v4, v5, v6 = st.columns(6)
+        v1.metric("ROC-AUC val", f"{s3['roc_auc']:.4f}")
+        v2.metric("Gini val", f"{s3['gini']:.4f}")
+        v3.metric("PR-AUC val", f"{s3['pr_auc']:.4f}")
+        v4.metric("Precision val", f"{s3['precision']:.2%}")
+        v5.metric("Recall val", f"{s3['recall']:.2%}")
+        v6.metric("F1 val", f"{s3['f1']:.4f}")
+
+        st.info(
+            "Interpretacion recomendada: Sprint 3 valida metodologicamente el clasificador "
+            "sobre un split temporal train/validacion. Sprint 4 no reemplaza esa referencia; "
+            "la complementa con integracion del MVP, scoring sobre holdout, explicabilidad y ROI."
+        )
+
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("**Escenario Sprint 3**")
+            st.write("- Split temporal de desarrollo y validacion.")
+            st.write("- Base para comparar modelos y elegir LightGBM final.")
+            st.write("- Umbral operativo adoptado: 0.55.")
+        with c2:
+            st.markdown("**Por que importa**")
+            st.write("- Evita leer el holdout como mejora milagrosa.")
+            st.write("- Separa validez metodologica de demostracion operativa.")
+            st.write("- Da contexto a la metrica alta del holdout.")
+
+    # ─── Tab 3: Holdout operativo Sprint 4 ────────────────────────────────
+    with tab_holdout:
+        m = HOLDOUT_METRICS
+        cm = get_confusion_counts()
+
+        st.subheader("Desempeno operativo sobre holdout_3m")
+        st.caption(
+            "Estas metricas estan precalculadas sobre el holdout final de Sprint 4. "
+            "Sirven para evaluar la operacion del MVP, no como reemplazo directo de la validacion de Sprint 3."
+        )
         mc1, mc2, mc3, mc4, mc5 = st.columns(5)
         mc1.metric("ROC-AUC", f"{m['roc_auc']:.4f}")
         mc2.metric("Gini", f"{m['gini']:.4f}")
         mc3.metric("Precision", f"{m['precision']:.2%}")
         mc4.metric("Recall", f"{m['recall']:.2%}")
         mc5.metric("F1-Score", f"{m['f1']:.2%}")
+
+        st.caption("Con umbral 0.55, el modelo prioriza un equilibrio entre precision y recall para campanas focalizadas.")
+
+        st.divider()
+        st.subheader("Conteos de clasificacion")
+        cc_tp, cc_fp, cc_fn, cc_tn = st.columns(4)
+        cc_tp.metric("TP", f"{cm['tp']:,}", delta="Premium reales detectados")
+        cc_fp.metric("FP", f"{cm['fp']:,}", delta="Contactos sin premium real", delta_color="inverse")
+        cc_fn.metric("FN", f"{cm['fn']:,}", delta="Premium reales omitidos", delta_color="inverse")
+        cc_tn.metric("TN", f"{cm['tn']:,}", delta="No premium correctamente descartados")
 
         st.divider()
         st.subheader("Distribucion de facturacion capturada")
@@ -314,9 +537,9 @@ def main() -> None:
         )
 
         st.divider()
-        st.subheader("Simulacion de campana de marketing")
+        st.subheader("Matriz de confusion y ROI")
         st.caption(
-            "Supuesto: costo BRL 15 por cliente contactado | retorno BRL 120 por cliente premium convertido"
+            "La matriz resume aciertos/errores del clasificador; el ROI muestra el valor de usar el score para focalizar la campana."
         )
 
         cc1, cc2, cc3 = st.columns(3)
@@ -337,27 +560,60 @@ def main() -> None:
             delta=f"Reduccion del {1 - m['n_pred_premium'] / m['n_total']:.1%}",
         )
 
-        # Grafico comparativo de ROI
-        fig2, ax2 = plt.subplots(figsize=(8, 4))
-        labels = ["Campana Masiva\n(Target All)", "Campana Optimizada\n(Modelo, umbral 0.55)"]
-        rois = [m["roi_masiva"], m["roi_modelo"]]
-        roi_colors = ["#e74c3c", "#27ae60"]
-        bars = ax2.bar(labels, rois, color=roi_colors, edgecolor="white", width=0.4)
-        ax2.axhline(0, color="#333333", linewidth=0.8)
-        ax2.set_ylabel("ROI (%)")
-        ax2.set_title("Comparativa de Retorno de Inversion por Estrategia de Campana")
-        for bar, val in zip(bars, rois):
-            ypos = val + 5 if val >= 0 else val - 12
-            ax2.text(
-                bar.get_x() + bar.get_width() / 2,
-                ypos,
-                f"{val:.2f}%",
-                ha="center",
-                fontweight="bold",
-            )
-        plt.tight_layout()
-        st.pyplot(fig2)
-        plt.close(fig2)
+        col_cm, col_roi = st.columns(2)
+
+        with col_cm:
+            st.markdown("**Matriz de confusion**")
+            st.caption("Filas: etiqueta real. Columnas: prediccion del modelo.")
+            fig_cm, ax_cm = plt.subplots(figsize=(5.0, 4.0))
+            cm_matrix = [
+                [cm["tn"], cm["fp"]],
+                [cm["fn"], cm["tp"]],
+            ]
+            im = ax_cm.imshow(cm_matrix, cmap=CMAP_CONFUSION)
+            ax_cm.set_xticks([0, 1], labels=["Pred: NO PREMIUM", "Pred: PREMIUM"])
+            ax_cm.set_yticks([0, 1], labels=["Real: NO PREMIUM", "Real: PREMIUM"])
+            ax_cm.set_title("Holdout")
+            max_cell = max(cm_matrix[0] + cm_matrix[1])
+            for i in range(2):
+                for j in range(2):
+                    ax_cm.text(
+                        j,
+                        i,
+                        f"{cm_matrix[i][j]:,}",
+                        ha="center",
+                        va="center",
+                        color=COLOR_TEXT if cm_matrix[i][j] < max_cell * 0.65 else "white",
+                        fontweight="bold",
+                    )
+            fig_cm.colorbar(im, ax=ax_cm, fraction=0.046, pad=0.04)
+            plt.tight_layout()
+            st.pyplot(fig_cm)
+            plt.close(fig_cm)
+
+        with col_roi:
+            st.markdown("**Comparativa de ROI**")
+            st.caption("Supuesto: costo BRL 15 por cliente | retorno BRL 120 por premium convertido.")
+            fig2, ax2 = plt.subplots(figsize=(6.0, 4.0))
+            labels = ["Campana Masiva\n(Target All)", "Campana Optimizada\n(Modelo, umbral 0.55)"]
+            rois = [m["roi_masiva"], m["roi_modelo"]]
+            roi_colors = [COLOR_RISK, COLOR_PREMIUM]
+            bars = ax2.bar(labels, rois, color=roi_colors, edgecolor="white", width=0.45)
+            ax2.axhline(0, color=COLOR_NEUTRAL, linewidth=0.8)
+            ax2.set_ylabel("ROI (%)")
+            ax2.set_title("Retorno por estrategia")
+            for bar, val in zip(bars, rois):
+                ypos = val + 5 if val >= 0 else val - 12
+                ax2.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    ypos,
+                    f"{val:.2f}%",
+                    ha="center",
+                    fontweight="bold",
+                )
+            plt.tight_layout()
+            st.pyplot(fig2)
+            plt.close(fig2)
 
 
 if __name__ == "__main__":

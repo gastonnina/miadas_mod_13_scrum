@@ -27,6 +27,57 @@ METADATA_PATH = PROJECT_ROOT / "data" / "processed" / "06_features_selected_meta
 
 THRESHOLD = 0.55
 MODEL_VERSION = "modelo_final.pkl"
+PREDICT_REQUEST_EXAMPLE = {
+    "total_orders": 2.0,
+    "total_items": 7.0,
+    "total_products": 3.0,
+    "avg_review_score": 5.0,
+    "avg_delivery_days": 6.0,
+    "avg_estimated_delivery_days": 32.5,
+    "delivered_orders": 2.0,
+    "late_deliveries": 0.0,
+    "payment_methods_count": 1.0,
+    "max_payment_installments": 10.0,
+    "recency_days": 65.0,
+    "customer_lifetime_days": 0.0,
+    "cancellation_rate": 0.0,
+    "products_per_order": 1.5,
+    "max_to_avg_price_ratio": 3.4008097166,
+    "installments_gt_1_flag": 1.0,
+    "installments_gt_6_flag": 1.0,
+    "credit_card_flag": 1.0,
+    "voucher_flag": 0.0,
+    "delivery_gap": 26.5,
+    "reviews_per_order": 1.0,
+    "far_region_flag": 0.0,
+    "top_category_is_high_value": 1.0,
+    "customer_state": "SC",
+    "main_payment_type": "credit_card",
+    "top_category": "construcao_ferramentas_construcao",
+    "region_group": "south",
+    "top_category_group": "other",
+}
+PREDICT_RESPONSE_PREMIUM_EXAMPLE = {
+    "customer_classification": "PREMIUM",
+    "is_premium": True,
+    "premium_probability": 0.992563,
+    "threshold_used": 0.55,
+    "model_version": "modelo_final.pkl",
+}
+PREDICT_RESPONSE_REGULAR_EXAMPLE = {
+    "customer_classification": "REGULAR",
+    "is_premium": False,
+    "premium_probability": 0.083142,
+    "threshold_used": 0.55,
+    "model_version": "modelo_final.pkl",
+}
+HEALTH_RESPONSE_EXAMPLE = {
+    "status": "ok",
+    "model_loaded": True,
+    "model_version": "modelo_final.pkl",
+    "features_expected": 28,
+    "threshold": 0.55,
+}
 
 # ── Carga del modelo al arrancar ─────────────────────────────────────────────
 _pipeline = None
@@ -81,6 +132,11 @@ class PredictRequest(BaseModel):
     region_group: Optional[str] = Field(None, example="southeast")
     top_category_group: Optional[str] = Field(None, example="tech")
 
+    class Config:
+        json_schema_extra = {
+            "example": PREDICT_REQUEST_EXAMPLE,
+        }
+
 
 class PredictResponse(BaseModel):
     customer_classification: str
@@ -89,6 +145,14 @@ class PredictResponse(BaseModel):
     threshold_used: float
     model_version: str
 
+    class Config:
+        json_schema_extra = {
+            "examples": [
+                PREDICT_RESPONSE_PREMIUM_EXAMPLE,
+                PREDICT_RESPONSE_REGULAR_EXAMPLE,
+            ]
+        }
+
 
 class HealthResponse(BaseModel):
     status: str
@@ -96,6 +160,11 @@ class HealthResponse(BaseModel):
     model_version: str
     features_expected: int
     threshold: float
+
+    class Config:
+        json_schema_extra = {
+            "example": HEALTH_RESPONSE_EXAMPLE,
+        }
 
 
 # ── App ──────────────────────────────────────────────────────────────────────
@@ -114,7 +183,12 @@ def startup_event() -> None:
     _load_resources()
 
 
-@app.get("/health", response_model=HealthResponse, tags=["ops"])
+@app.get(
+    "/health",
+    response_model=HealthResponse,
+    tags=["ops"],
+    summary="Estado del servicio",
+)
 def health() -> HealthResponse:
     """Verificacion de disponibilidad del servicio y del modelo."""
     return HealthResponse(
@@ -126,7 +200,31 @@ def health() -> HealthResponse:
     )
 
 
-@app.post("/predict", response_model=PredictResponse, tags=["scoring"])
+@app.post(
+    "/predict",
+    response_model=PredictResponse,
+    tags=["scoring"],
+    summary="Scoring de cliente premium",
+    responses={
+        200: {
+            "description": "Prediccion exitosa",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "premium_detectado": {
+                            "summary": "Cliente clasificado como PREMIUM",
+                            "value": PREDICT_RESPONSE_PREMIUM_EXAMPLE,
+                        },
+                        "cliente_regular": {
+                            "summary": "Cliente clasificado como REGULAR",
+                            "value": PREDICT_RESPONSE_REGULAR_EXAMPLE,
+                        },
+                    }
+                }
+            },
+        }
+    },
+)
 def predict(body: PredictRequest) -> PredictResponse:
     """
     Clasifica un cliente como PREMIUM o REGULAR.
