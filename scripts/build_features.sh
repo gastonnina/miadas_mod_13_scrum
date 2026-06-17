@@ -42,17 +42,21 @@ echo ""
 echo "=== Simulacion mensual: holdout (apply threshold) ==="
 
 echo ""
-echo "--- [5/5] Master table HOLDOUT ---"
+echo "--- [5/7] Master table HOLDOUT ---"
 run src/data/build_master_table.py \
     --profile-source holdout \
     --threshold-mode apply
 
 echo ""
-echo "--- [6/6] Features RFM HOLDOUT ---"
+echo "--- [6/7] Features RFM HOLDOUT ---"
 run src/features/build_rfm_features.py \
     --input-path data/processed/03_master_table_clean_holdout.parquet \
     --output-path data/processed/holdout_features_rfm.parquet \
     --metadata-path data/processed/holdout_features_rfm_metadata.json
+
+echo ""
+echo "--- [7/7] Dataset de scoring HOLDOUT alineado al modelo final ---"
+run scripts/build_holdout_scoring_dataset.py
 
 echo ""
 echo "=== Pipeline completo OK ==="
@@ -64,3 +68,4 @@ echo "  data/processed/08_evaluation_metrics.json"
 echo "Artefactos HOLDOUT:"
 echo "  data/processed/03_master_table_clean_holdout.parquet"
 echo "  data/processed/holdout_features_rfm.parquet"
+echo "  data/processed/holdout_features_selected.parquet"

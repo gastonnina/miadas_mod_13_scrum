@@ -91,6 +91,9 @@ data/raw/*.csv
 # Optional: ignore parquet generated artifacts if needed
 # data/parquet/*.parquet
 
+# CatBoost training artifacts
+notebooks/sprint_03_modeling/catboost_info/
+
 # =========================================================
 # Streamlit
 # =========================================================

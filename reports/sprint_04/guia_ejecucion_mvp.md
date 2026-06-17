@@ -4,11 +4,31 @@
 
 - Docker y Docker Compose instalados
 - Estar parado en la raiz del repositorio
+- Para reproducir el artefacto `modelo_final.pkl` se usa runtime Python `3.12` en los contenedores del MVP.
+
+## Generar artefactos del Sprint 4
+
+```bash
+bash scripts/build_features.sh
+```
+
+Este comando deja listos los artefactos de scoring del holdout:
+
+- `data/processed/holdout_features_rfm.parquet`
+- `data/processed/holdout_features_selected.parquet`
+- `data/processed/demo_sample_scoring.parquet`
+- `data/processed/demo_cases.csv`
 
 ## Levantar el dashboard
 
 ```bash
 docker compose up dashboard --build
+```
+
+O usando el script del sprint:
+
+```bash
+bash scripts/run_app.sh dashboard
 ```
 
 Abrir en el navegador: `http://localhost:8501`
@@ -19,10 +39,34 @@ Abrir en el navegador: `http://localhost:8501`
 docker compose up dashboard api --build
 ```
 
+O usando el script del sprint:
+
+```bash
+bash scripts/run_app.sh all
+```
+
 | Servicio  | URL                          |
 |-----------|------------------------------|
 | Dashboard | http://localhost:8501        |
 | API docs  | http://localhost:8000/docs   |
+
+Si el puerto `8000` ya esta ocupado en tu maquina, levanta la API con otro puerto:
+
+```bash
+API_PORT=8001 docker compose up api --build
+```
+
+La documentacion quedara disponible en `http://localhost:8001/docs`.
+
+## Nota sobre perfiles de Docker Compose
+
+`pipeline` y `pipeline-cron` quedaron bajo el perfil `pipeline`, para que `docker compose up` levante por defecto solo el MVP (`dashboard` y `api`).
+
+Si tambien quieres levantar los servicios del pipeline:
+
+```bash
+docker compose --profile pipeline up --build
+```
 
 ## Detener
 

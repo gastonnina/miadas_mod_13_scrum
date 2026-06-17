@@ -15,9 +15,9 @@ Este directorio contiene scripts de soporte para ingesta, EDA, splits temporales
   - Salida en `data/splits/temporal_2018q4/`.
   - Genera también `holdout_3m_ids.parquet` y `holdout_3m_metadata.json`.
 
-3. Pipeline Sprint 2 completo (dev + holdout) — un solo comando
+3. Pipeline Sprint 2/Sprint 4 completo (dev + holdout) — un solo comando
 - `build_features.sh`
-  - Orquesta los 6 pasos del Sprint 2 en orden: master table dev → features dev → selección experimental → evaluación vs baseline → master table holdout → features holdout.
+  - Orquesta los 7 pasos en orden: master table dev → features dev → selección experimental → evaluación vs baseline → master table holdout → features holdout → alineación final para scoring del MVP.
   - Usa el entorno conda `ai-miadas` por defecto (sobreescribible con `CONDA_ENV=otro`).
   - Requiere haber completado los pasos 1 y 2 primero.
 
@@ -42,14 +42,17 @@ Este directorio contiene scripts de soporte para ingesta, EDA, splits temporales
   # [4/4] Evaluación vs baseline — métricas sobre split temporal 2018-07-01
   $CONDA src/models/evaluate_model.py
 
-  # [5/6] Master table HOLDOUT — aplica umbral fijo (apply), no recalcula
+  # [5/7] Master table HOLDOUT — aplica umbral fijo (apply), no recalcula
   $CONDA src/data/build_master_table.py --profile-source holdout --threshold-mode apply
 
-  # [6/6] Features RFM HOLDOUT — simulación mensual ago-oct 2018
+  # [6/7] Features RFM HOLDOUT — simulación mensual ago-oct 2018
   $CONDA src/features/build_rfm_features.py \
       --input-path data/processed/03_master_table_clean_holdout.parquet \
       --output-path data/processed/holdout_features_rfm.parquet \
       --metadata-path data/processed/holdout_features_rfm_metadata.json
+
+  # [7/7] Alineación final al modelo oficial del Sprint 4
+  $CONDA scripts/build_holdout_scoring_dataset.py
   ```
 
   Artefactos generados:
@@ -62,6 +65,7 @@ Este directorio contiene scripts de soporte para ingesta, EDA, splits temporales
   | `data/processed/08_evaluation_metrics.json` | Métricas finales vs baseline |
   | `data/processed/03_master_table_clean_holdout.parquet` | Master table limpia (holdout) |
   | `data/processed/holdout_features_rfm.parquet` | Features RFM holdout |
+  | `data/processed/holdout_features_selected.parquet` | Dataset final de scoring alineado a `modelo_final.pkl` |
   | `data/processed/premium_threshold_dev.json` | Umbral P80 = 197.01 persistido |
 
 4. Entrenamiento de modelos (Sprint 3)
@@ -99,6 +103,7 @@ Este directorio contiene scripts de soporte para ingesta, EDA, splits temporales
   - Atajo para correr notebooks/flujo EDA del repositorio.
 - `run_app.sh`
   - Levanta servicios de app/API/dashboard según configuración local.
+  - Soporta `dashboard`, `api` o `all`.
 
 ## Notas operativas
 

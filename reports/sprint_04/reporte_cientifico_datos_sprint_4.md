@@ -39,9 +39,23 @@ El notebook [notebooks/sprint_04_integration/04_demo_validation.ipynb](file:///h
 * **Descripción:** Imagen que contiene la matriz de confusión del modelo sobre el holdout y la gráfica de barras de la comparativa de ROI.
 * **Uso:** Listo para insertar directamente en las diapositivas de la presentación ejecutiva.
 
+### D. Gráfico SHAP Global tipo Beeswarm
+* **Archivo:** `reports/figures/sprint_04_shap_beeswarm.png`  
+* **Descripción:** Visual global de explicabilidad que resume cómo las variables más influyentes empujan el score del modelo sobre una muestra del holdout.
+* **Uso:** Sirve para sustentar la narrativa técnica del modelo en el pitch y mostrar evidencia visual de explicabilidad más allá del caso individual.
+
 ---
 
 ## 3. Resultados Analíticos y Métricas de Negocio Oficiales
+
+### Qué debe considerarse el resultado principal del Sprint 4
+
+Para defensa académica y ejecutiva, conviene separar dos planos:
+
+- **Sprint 3**: validación metodológica principal del modelo, selección final y tuning.
+- **Sprint 4**: validación de integración del MVP, scoring sobre holdout, explicabilidad SHAP, simulación de ROI y cierre de gobernanza.
+
+Por tanto, el mensaje correcto no es “el modelo mejoró drásticamente en Sprint 4”, sino “el modelo ya validado en Sprint 3 fue convertido en una solución demostrable y defendible de punta a punta”.
 
 Para la redacción del informe de negocio y el pitch, estos son nuestros números oficiales de holdout:
 
@@ -49,6 +63,21 @@ Para la redacción del informe de negocio y el pitch, estos son nuestros número
 * **Regla de decisión del modelo:** Clasificar como premium si la probabilidad estimada es **$\ge$ 0.55** (umbral óptimo obtenido por Optuna).
 * **Tasa de premium predicha en holdout:** **1.73%** (1,659 clientes).
 * **Métricas técnicas en holdout:** ROC-AUC de `0.9872` | Gini de `0.9745` | Precision de `43.10%` | Recall de `57.06%` | F1-Score de `49.11%`.
+* **Explicabilidad global:** Se generó un SHAP Summary Plot tipo beeswarm (`reports/figures/sprint_04_shap_beeswarm.png`) a partir de las contribuciones nativas de LightGBM sobre una muestra del holdout.
+
+### Nota metodológica importante sobre el holdout
+
+El holdout técnico del Sprint 4 fue definido como la ventana `2018-08-01` a `2018-10-31`. Sin embargo, al revisar la distribución real de órdenes observamos que el volumen útil del dataset se concentra casi por completo en agosto de 2018, mientras que septiembre y octubre quedan prácticamente vacíos. Por ello:
+
+- no interpretamos septiembre y octubre como evidencia de crecimiento real o cambio estructural de comportamiento;
+- no usamos esos meses para construir narrativa de tendencia comercial;
+- interpretamos el holdout principalmente como una validación operativa y de integración sobre una ventana final truncada, no como una comparación histórica homogénea mes a mes.
+
+En consecuencia, el ROC-AUC holdout de `0.9872` debe defenderse como evidencia de alta separabilidad del escenario evaluado, no como una mejora automática o milagrosa respecto a la validación temporal del Sprint 3.
+
+Si el jurado pregunta por qué el AUC es tan alto, la respuesta recomendada es:
+
+> El holdout del Sprint 4 es más fácil de separar que la validación temporal del Sprint 3 y la etiqueta premium está muy conectada con señales transaccionales. Por eso usamos este resultado sobre todo como validación operativa del MVP y no como única prueba de superioridad del modelo.
 
 ### Captura de Gasto y Simulación de Campaña (BRL 15 costo / BRL 120 retorno)
 1. **Facturación total en holdout:** BRL 985,414.28.
@@ -56,6 +85,12 @@ Para la redacción del informe de negocio y el pitch, estos son nuestros número
 3. **Estrategia Masiva (All):** Costo BRL 1.44M, Retorno BRL 150K $\rightarrow$ **Pérdida neta de BRL -1.29 millones (ROI: -89.57%)**.
 4. **Estrategia del Modelo (Umbral 0.55):** Costo BRL 24,885, Retorno BRL 85.8K $\rightarrow$ **Utilidad neta de BRL +60,915.00 (ROI: +244.79%)**.
 5. **Ahorro generado:** Reducción del **98.27% del costo de marketing** (ahorro de **BRL 1,416,555.00**).
+
+### Cómo defender el AUC holdout ante el jurado
+
+Una formulación defendible es la siguiente:
+
+> El ROC-AUC holdout de `0.9872` no se presenta como prueba única de superioridad definitiva del modelo. Lo interpretamos como resultado de un escenario holdout más separable y de una etiqueta premium muy conectada con señales transaccionales. La comparación metodológica principal del modelo sigue siendo la validación temporal del Sprint 3; el holdout del Sprint 4 se usa sobre todo como validación operativa, explicativa y de negocio para el MVP.
 
 ---
 

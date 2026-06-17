@@ -90,7 +90,8 @@ def compute_contributions(pipeline, X_row: pd.DataFrame) -> pd.Series:
     lgb_model = pipeline.named_steps["model"]
     X_proc = preprocessor.transform(X_row)
     feature_names = preprocessor.get_feature_names_out()
-    contribs = lgb_model.predict(X_proc, pred_contrib=True)
+    X_proc_df = pd.DataFrame(X_proc, columns=feature_names, index=X_row.index)
+    contribs = lgb_model.predict(X_proc_df, pred_contrib=True)
     clean_names = [
         n.replace("num__", "").replace("cat__", "") for n in feature_names
     ]
@@ -112,6 +113,20 @@ def render_contribution_chart(contrib: pd.Series, title: str) -> None:
     plt.tight_layout()
     st.pyplot(fig)
     plt.close(fig)
+
+
+def safe_int(value, default: str = "N/A"):
+    """Devuelve entero si el valor es valido; si no, retorna un texto por defecto."""
+    if value is None or pd.isna(value):
+        return default
+    return int(value)
+
+
+def safe_float_metric(value, default: str = "N/A") -> str:
+    """Formatea metricas numericas evitando NaN en el dashboard."""
+    if value is None or pd.isna(value):
+        return default
+    return f"{float(value):,.2f}"
 
 
 # ── App principal ────────────────────────────────────────────────────────────
@@ -239,19 +254,20 @@ def main() -> None:
             st.subheader("Perfil del cliente")
             info = info_row.iloc[0]
             c1, c2, c3, c4, c5 = st.columns(5)
-            c1.metric("Gasto total (BRL)", f"{info.get('total_spent', 0):,.2f}")
-            c2.metric("Ordenes totales", int(info.get("total_orders", 0)))
-            c3.metric("Ticket promedio (BRL)", f"{info.get('avg_ticket', 0):,.2f}")
+            c1.metric("Gasto total (BRL)", safe_float_metric(info.get("total_spent", 0)))
+            c2.metric("Ordenes totales", safe_int(info.get("total_orders", 0), default="0"))
+            c3.metric("Ticket promedio (BRL)", safe_float_metric(info.get("avg_ticket", 0)))
             c4.metric("Estado", str(info.get("customer_state", "N/A")))
             recency = row["recency_days"].values[0] if "recency_days" in row.columns else None
             c5.metric(
                 "Recencia (dias)",
-                int(recency) if recency is not None else "N/A",
+                safe_int(recency),
             )
             st.divider()
 
         # Contribuciones locales (SHAP nativo LightGBM)
         st.subheader("Variables mas relevantes para este cliente")
+        st.caption("SHAP local del cliente seleccionado. Verde empuja hacia premium; rojo empuja hacia regular.")
         try:
             contrib = compute_contributions(pipeline, X)
             render_contribution_chart(

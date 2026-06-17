@@ -1,8 +1,20 @@
 import os
 from pathlib import Path
 
-# Resolve project root: scripts/ -> sprint_02_pipeline/ -> notebooks/ -> project root
-_default_root = Path(__file__).resolve().parents[3]
+def _find_default_root() -> Path:
+    """Detecta la raiz tanto en el repo local como dentro del contenedor Docker."""
+    candidate = Path(__file__).resolve()
+
+    for parent in [candidate, *candidate.parents]:
+        if (parent / "data").exists():
+            return parent
+
+    # Fallback defensivo: evita IndexError si la jerarquia cambia en runtime.
+    parents = candidate.parents
+    return parents[len(parents) - 1]
+
+
+_default_root = _find_default_root()
 
 PROJECT_ROOT = Path(os.environ.get("PROJECT_ROOT", str(_default_root)))
 RAW_DIR = Path(os.environ.get("RAW_DIR", str(PROJECT_ROOT / "data" / "raw")))
