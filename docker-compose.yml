@@ -1,12 +1,13 @@
 version: "3.9"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Olist Premium-Customer Pipeline
+# Olist Premium-Customer Pipeline + MVP Dashboard
 #
 # Services
 # ─────────
 # pipeline      One-shot run (use `docker compose run pipeline` to trigger manually)
 # pipeline-cron Runs the pipeline on a cron schedule (default: every 3 months)
+# dashboard     MVP Streamlit para Demo Day (puerto 8501)
 #
 # Usage
 # ─────
@@ -21,6 +22,16 @@ version: "3.9"
 #
 # Change the schedule (every month):
 #   PIPELINE_CRON="0 2 1 * *" docker compose up pipeline-cron
+#
+# Levantar el dashboard MVP:
+#   docker compose up dashboard
+#   Abrir en http://localhost:8501
+#
+# Levantar la API minima (stretch goal):
+#   docker compose up api
+#   Docs en http://localhost:8000/docs
+#   Health: GET http://localhost:8000/health
+#   Predict: POST http://localhost:8000/predict
 # ─────────────────────────────────────────────────────────────────────────────
 
 x-pipeline-base: &pipeline-base
@@ -53,4 +64,26 @@ services:
       dockerfile: Dockerfile
       args:
         PIPELINE_CRON: "${PIPELINE_CRON:-0 2 1 1,4,7,10 *}"
+    restart: unless-stopped
+
+  # ── MVP Streamlit Dashboard (Demo Day) ────────────────────────────────────
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      PYTHONPATH: /app
+    restart: unless-stopped
+
+  # ── API minima de scoring (stretch goal S4-DE-04) ─────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      PYTHONPATH: /app
     restart: unless-stopped

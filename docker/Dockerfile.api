@@ -1,0 +1,35 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Aplicar parches de seguridad e instalar libgomp1 (requerida por LightGBM)
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar dependencias Python de la API
+RUN pip install --no-cache-dir \
+    "pandas>=2.2.0" \
+    "pyarrow>=15.0.0" \
+    "numpy>=1.26.0" \
+    "scikit-learn>=1.4.0" \
+    "lightgbm>=4.3.0" \
+    "fastapi>=0.111.0" \
+    "uvicorn[standard]>=0.30.0"
+
+# Copiar la app
+COPY app/ app/
+
+# Copiar el modelo oficial de inferencia
+COPY models/final/modelo_final.pkl models/final/modelo_final.pkl
+
+# Copiar los artefactos de metadatos requeridos
+COPY data/processed/06_features_selected_metadata.json data/processed/06_features_selected_metadata.json
+
+ENV PYTHONPATH=/app
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.api.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000"]
