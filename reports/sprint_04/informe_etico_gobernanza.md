@@ -4,6 +4,33 @@
 
 El MVP de Sprint 4 identifica clientes con alta probabilidad de pertenecer al segmento premium para focalizar campañas comerciales y evitar el gasto ineficiente de estrategias masivas. El modelo no toma decisiones automáticas irreversibles sobre crédito, exclusión de servicio ni precio individual; su uso previsto es priorización comercial y apoyo a la toma de decisiones humanas.
 
+## Privacidad y tratamiento de datos
+
+### 1. Datos que no se usan para entrenar el modelo
+
+El modelo final no entrena con datos personales directos ni con identificadores operativos de alta sensibilidad. En la selección final de variables quedaron excluidos:
+
+- `customer_unique_id`
+- `customer_city`
+- `customer_zip_code_prefix`
+- variables de gasto directo como `total_spent` y `avg_ticket`
+
+Esto permite sostener que el score no se apoya en nombre, correo, teléfono, dirección exacta, documento personal ni medios de pago completos. Tampoco utiliza números de tarjeta, cuentas bancarias ni credenciales de pago; el dataset solo contiene señales agregadas como tipo principal de pago o cantidad de cuotas.
+
+### 2. Datos que sí aparecen en capas intermedias
+
+En la construcción de la master table se usa `customer_unique_id` como llave técnica de consolidación y trazabilidad. Sin embargo, esa columna queda fuera del set final de entrenamiento y no participa como predictor del modelo.
+
+También se conservan variables de contexto como `customer_state` y `main_payment_type`. Estas no son datos sensibles directos, pero sí pueden funcionar como proxies de condiciones regionales o de bancarización, por lo que deben tratarse como variables de riesgo ético y no como atributos neutrales.
+
+### 3. Criterio de protección esperado para un despliegue real
+
+En este MVP académico no se evidencia un componente formal de cifrado en reposo o en tránsito dentro del repositorio. Por eso la defensa correcta no es afirmar que "todo está encriptado", sino precisar lo siguiente:
+
+- el modelo no fue entrenado con datos personales sensibles directos;
+- los identificadores técnicos usados para integrar tablas deben minimizarse en exposición;
+- si una versión productiva almacenara identificadores de cliente, payloads de scoring o historiales de consulta, esos artefactos deberían viajar por canales cifrados y persistirse con controles de acceso y cifrado en reposo.
+
 ## Riesgos éticos identificados
 
 ### 1. Sesgo logístico y geográfico
@@ -49,6 +76,24 @@ Si se detecta desplazamiento fuerte en estas métricas, el modelo debe ser reent
 
 La app y la API deben conservar la posibilidad de explicar cada score mediante contribuciones locales de variables. Esto permite auditar por qué un cliente fue priorizado y facilita la defensa técnica ante jurado o stakeholders.
 
+### 5. Criterio de reentrenamiento del modelo
+
+El modelo no debe reentrenarse solo por pasar cierto tiempo calendario, sino cuando la evidencia muestre que el comportamiento histórico dejó de representar bien al mercado actual.
+
+Se recomienda disparar revisión o reentrenamiento cuando ocurra alguna de estas condiciones sobre ventanas nuevas no usadas en entrenamiento:
+
+- caída sostenida de métricas de discriminación como `Gini`, `ROC-AUC`, `precision` o `recall`
+- deterioro del ROI de campaña focalizada frente al escenario esperado
+- cambio fuerte en la tasa predicha de clientes premium
+- drift visible en variables clave como `delivered_orders`, `total_items`, `max_payment_installments`, `customer_state` o `top_category_is_high_value`
+
+Como criterio operativo inicial para el MVP:
+
+- alerta amarilla si el `Gini` cae más de `20%` respecto al baseline de referencia
+- alerta roja si el `Gini` cae por debajo de un umbral mínimo acordado por negocio y al mismo tiempo se deteriora el ROI o cambia de forma brusca la tasa premium predicha
+
+La base correcta para reentrenar no debe ser cualquier mes histórico mezclado, sino una nueva ventana temporal completa y posterior al período usado para entrenar el artefacto vigente. Esto evita confundir backtesting sobre historia conocida con verdadera adaptación a condiciones nuevas del mercado.
+
 ## Límites del MVP
 
 - El modelo se entrenó sobre comportamiento histórico y no mide causalidad.
@@ -58,4 +103,4 @@ La app y la API deben conservar la posibilidad de explicar cada score mediante c
 
 ## Recomendación final
 
-El modelo puede usarse como herramienta de apoyo comercial siempre que su despliegue se mantenga dentro de un marco de supervisión humana, versionado explícito y monitoreo de variables logísticas y de pago. La prioridad para una siguiente iteración debe ser robustecer gobernanza y compatibilidad reproducible del artefacto antes de cualquier uso operativo más amplio.
+El modelo puede usarse como herramienta de apoyo comercial siempre que su despliegue se mantenga dentro de un marco de supervisión humana, versionado explícito, minimización de identificadores y monitoreo de variables logísticas y de pago. La prioridad para una siguiente iteración debe ser robustecer gobernanza, controles de privacidad y compatibilidad reproducible del artefacto antes de cualquier uso operativo más amplio.

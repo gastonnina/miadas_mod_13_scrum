@@ -26,9 +26,9 @@ def _find_project_root() -> Path:
 
 PROJECT_ROOT = _find_project_root()
 MODEL_PATH = PROJECT_ROOT / "models" / "final" / "modelo_final.pkl"
-DATA_PATH = PROJECT_ROOT / "data" / "processed" / "holdout_features_selected.parquet"
+DATA_PATH = PROJECT_ROOT / "data" / "processed" / "backtest_features_selected.parquet"
 METADATA_PATH = PROJECT_ROOT / "data" / "processed" / "06_features_selected_metadata.json"
-MASTER_PATH = PROJECT_ROOT / "data" / "processed" / "03_master_table_clean_holdout.parquet"
+MASTER_PATH = PROJECT_ROOT / "data" / "processed" / "03_master_table_clean_backtest.parquet"
 DEMO_SAMPLE_PATH = PROJECT_ROOT / "data" / "processed" / "demo_sample_scoring.parquet"
 
 THRESHOLD = 0.55
@@ -38,25 +38,25 @@ COLOR_NEUTRAL = "#5b7c99"
 COLOR_TEXT = "#213547"
 CMAP_CONFUSION = "GnBu"
 
-# Metricas pre-computadas en notebook 04_demo_validation.ipynb (holdout_3m, umbral 0.55)
-HOLDOUT_METRICS = {
-    "roc_auc": 0.9872,
-    "gini": 0.9745,
-    "precision": 0.4310,
-    "recall": 0.5706,
-    "f1": 0.4911,
+# Metricas oficiales del backtest (agosto 2018, umbral 0.55)
+BACKTEST_METRICS = {
+    "roc_auc": 0.9876,
+    "gini": 0.9751,
+    "precision": 0.4380,
+    "recall": 0.5611,
+    "f1": 0.4920,
     "n_total": 96_096,
     "n_premium": 1_253,
     "premium_rate": 0.013,
     "total_spend": 985_414.28,
     "premium_spend": 521_001.48,
     "premium_spend_pct": 0.5287,
-    "tp_spend": 333_999.80,
+    "tp_spend": 328_003.99,
     "roi_masiva": -89.57,
-    "roi_modelo": 244.79,
-    "cost_savings": 1_416_555.00,
-    "n_pred_premium": 1_659,
-    "tp_count": 715,
+    "roi_modelo": 250.40,
+    "cost_savings": 1_417_365.00,
+    "n_pred_premium": 1_605,
+    "tp_count": 703,
 }
 
 SPRINT3_VALIDATION_METRICS = {
@@ -144,9 +144,9 @@ def safe_float_metric(value, default: str = "N/A") -> str:
     return f"{float(value):,.2f}"
 
 
-@st.cache_data(show_spinner="Calculando scores del holdout completo...")
-def build_holdout_selector_frame(_pipeline, df: pd.DataFrame, selected_cols: list[str]) -> pd.DataFrame:
-    """Precalcula score y etiquetas para un selector mas util del holdout."""
+@st.cache_data(show_spinner="Calculando scores del backtest completo...")
+def build_backtest_selector_frame(_pipeline, df: pd.DataFrame, selected_cols: list[str]) -> pd.DataFrame:
+    """Precalcula score y etiquetas para un selector mas util del backtest."""
     enriched = df[["customer_unique_id", "is_premium"]].copy()
     enriched["row_idx"] = df.index.astype(int)
     enriched["premium_probability"] = _pipeline.predict_proba(df[selected_cols])[:, 1]
@@ -157,7 +157,7 @@ def build_holdout_selector_frame(_pipeline, df: pd.DataFrame, selected_cols: lis
     return enriched
 
 
-def format_holdout_option(option_row: pd.Series) -> str:
+def format_backtest_option(option_row: pd.Series) -> str:
     real_label = "PREM" if int(option_row["is_premium"]) == 1 else "REG"
     pred_label = "PREM" if bool(option_row["is_pred_premium"]) else "REG"
     return (
@@ -169,11 +169,49 @@ def format_holdout_option(option_row: pd.Series) -> str:
 
 
 def get_confusion_counts() -> dict[str, int]:
-    tp = int(HOLDOUT_METRICS["tp_count"])
-    fp = int(HOLDOUT_METRICS["n_pred_premium"] - tp)
-    fn = int(HOLDOUT_METRICS["n_premium"] - tp)
-    tn = int(HOLDOUT_METRICS["n_total"] - tp - fp - fn)
+    tp = int(BACKTEST_METRICS["tp_count"])
+    fp = int(BACKTEST_METRICS["n_pred_premium"] - tp)
+    fn = int(BACKTEST_METRICS["n_premium"] - tp)
+    tn = int(BACKTEST_METRICS["n_total"] - tp - fp - fn)
     return {"tp": tp, "fp": fp, "fn": fn, "tn": tn}
+
+
+@st.cache_data(show_spinner="Calculando tabla lift/gain del backtest...")
+def build_backtest_lift_table(_pipeline, df: pd.DataFrame, selected_cols: list[str]) -> pd.DataFrame:
+    scored = pd.DataFrame(
+        {
+            "is_premium": df["is_premium"].astype(int),
+            "prob": _pipeline.predict_proba(df[selected_cols])[:, 1],
+        }
+    ).sort_values("prob", ascending=False, kind="mergesort").reset_index(drop=True)
+
+    n_rows = len(scored)
+    scored["decile"] = pd.Series(range(1, n_rows + 1)).div(n_rows).mul(10).apply(lambda x: int(-(-x // 1)))
+    total_events = int(scored["is_premium"].sum())
+    base_rate = scored["is_premium"].mean()
+
+    lift_table = (
+        scored.groupby("decile", sort=True)
+        .agg(
+            cases=("is_premium", "size"),
+            responses=("is_premium", "sum"),
+            min_score=("prob", "min"),
+            max_score=("prob", "max"),
+            avg_score=("prob", "mean"),
+        )
+        .reset_index()
+    )
+    lift_table["response_rate"] = lift_table["responses"] / lift_table["cases"]
+    lift_table["premium_rate_pct"] = lift_table["response_rate"] * 100
+    lift_table["cum_cases"] = lift_table["cases"].cumsum()
+    lift_table["cum_responses"] = lift_table["responses"].cumsum()
+    lift_table["cum_cases_pct"] = lift_table["cum_cases"] / n_rows
+    lift_table["cum_events_pct"] = lift_table["cum_responses"] / total_events
+    lift_table["cum_events_pct_display"] = lift_table["cum_events_pct"] * 100
+    lift_table["gain_pct"] = lift_table["cum_events_pct"] * 100
+    lift_table["lift"] = lift_table["response_rate"] / base_rate
+    lift_table["cum_lift"] = lift_table["cum_events_pct"] / lift_table["cum_cases_pct"]
+    return lift_table
 
 
 # ── App principal ────────────────────────────────────────────────────────────
@@ -206,7 +244,7 @@ def main() -> None:
     st.title("Identificacion de Clientes Premium")
     st.caption(
         f"Modelo: `modelo_final.pkl` · Pipeline: LightGBM + ColumnTransformer · "
-        f"Umbral: {THRESHOLD:.0%} · Dataset: holdout\\_3m (96 096 clientes)"
+        f"Umbral: {THRESHOLD:.0%} · Dataset: backtest (agosto 2018, 96 096 clientes)"
     )
 
     # Cargar recursos
@@ -232,7 +270,8 @@ def main() -> None:
         st.error(f"Columnas faltantes en el dataset: {missing_cols}")
         st.stop()
 
-    holdout_selector_df = build_holdout_selector_frame(pipeline, df, selected_cols)
+    backtest_selector_df = build_backtest_selector_frame(pipeline, df, selected_cols)
+    lift_table = build_backtest_lift_table(pipeline, df, selected_cols)
 
     # ── Sidebar ──────────────────────────────────────────────────────────────
     with st.sidebar:
@@ -272,7 +311,7 @@ def main() -> None:
                 placeholder="Ej: 861eff47",
             ).strip().lower()
 
-            filtered = holdout_selector_df.copy()
+            filtered = backtest_selector_df.copy()
             if filtro == "Premium predichos":
                 filtered = filtered[filtered["is_pred_premium"]]
             elif filtro == "Premium reales":
@@ -307,11 +346,11 @@ def main() -> None:
 
             option_ids = filtered["customer_unique_id"].tolist()
             option_map = {
-                cid_option: format_holdout_option(filtered.loc[filtered["customer_unique_id"] == cid_option].iloc[0])
+                cid_option: format_backtest_option(filtered.loc[filtered["customer_unique_id"] == cid_option].iloc[0])
                 for cid_option in option_ids
             }
             selected_cid = st.selectbox(
-                "Cliente del holdout",
+                "Cliente del backtest",
                 option_ids,
                 format_func=lambda cid_option: option_map[cid_option],
             )
@@ -326,7 +365,7 @@ def main() -> None:
                         "Falsos negativos (FN)",
                     ],
                 )
-                advanced_df = holdout_selector_df.copy()
+                advanced_df = backtest_selector_df.copy()
                 if advanced_filter == "Aciertos premium (TP)":
                     advanced_df = advanced_df[
                         (advanced_df["is_premium"] == 1) & (advanced_df["is_pred_premium"])
@@ -345,7 +384,7 @@ def main() -> None:
                     advanced_df = advanced_df.sort_values("premium_probability", ascending=False).head(50)
                     advanced_ids = advanced_df["customer_unique_id"].tolist()
                     advanced_map = {
-                        cid_option: format_holdout_option(
+                        cid_option: format_backtest_option(
                             advanced_df.loc[advanced_df["customer_unique_id"] == cid_option].iloc[0]
                         )
                         for cid_option in advanced_ids
@@ -370,12 +409,12 @@ def main() -> None:
             row = df[df["customer_unique_id"] == cid]
 
         st.divider()
-        st.markdown("**Estadisticas del holdout**")
-        m = HOLDOUT_METRICS
+        st.markdown("**Estadisticas del backtest**")
+        m = BACKTEST_METRICS
         st.metric("Total clientes", f"{m['n_total']:,}")
         st.metric("Clientes premium reales", f"{m['n_premium']:,} ({m['premium_rate']:.1%})")
-        st.metric("ROC-AUC holdout", f"{m['roc_auc']:.4f}")
-        st.metric("Gini holdout", f"{m['gini']:.4f}")
+        st.metric("ROC-AUC backtest", f"{m['roc_auc']:.4f}")
+        st.metric("Gini backtest", f"{m['gini']:.4f}")
 
     if row.empty:
         st.warning("No se encontro el cliente seleccionado.")
@@ -394,8 +433,8 @@ def main() -> None:
     is_true_premium = int(row["is_premium"].values[0]) if "is_premium" in row.columns else None
 
     # ── Tabs ─────────────────────────────────────────────────────────────────
-    tab_scoring, tab_validacion, tab_holdout = st.tabs(
-        ["Scoring Individual", "Validacion Sprint 3", "Holdout y ROI"]
+    tab_scoring, tab_validacion, tab_backtest = st.tabs(
+        ["Scoring Individual", "Validacion Sprint 3", "Backtest y ROI"]
     )
 
     # ─── Tab 1: Scoring individual ─────────────────────────────────────────
@@ -479,7 +518,7 @@ def main() -> None:
         st.info(
             "Interpretacion recomendada: Sprint 3 valida metodologicamente el clasificador "
             "sobre un split temporal train/validacion. Sprint 4 no reemplaza esa referencia; "
-            "la complementa con integracion del MVP, scoring sobre holdout, explicabilidad y ROI."
+            "la complementa con integracion del MVP, scoring sobre backtest, explicabilidad y ROI."
         )
 
         c1, c2 = st.columns(2)
@@ -490,18 +529,18 @@ def main() -> None:
             st.write("- Umbral operativo adoptado: 0.55.")
         with c2:
             st.markdown("**Por que importa**")
-            st.write("- Evita leer el holdout como mejora milagrosa.")
+            st.write("- Evita leer el backtest como mejora milagrosa.")
             st.write("- Separa validez metodologica de demostracion operativa.")
-            st.write("- Da contexto a la metrica alta del holdout.")
+            st.write("- Da contexto a la metrica alta del backtest.")
 
-    # ─── Tab 3: Holdout operativo Sprint 4 ────────────────────────────────
-    with tab_holdout:
-        m = HOLDOUT_METRICS
+    # ─── Tab 3: Backtest operativo Sprint 4 ───────────────────────────────
+    with tab_backtest:
+        m = BACKTEST_METRICS
         cm = get_confusion_counts()
 
-        st.subheader("Desempeno operativo sobre holdout_3m")
+        st.subheader("Desempeno operativo sobre backtest (agosto 2018)")
         st.caption(
-            "Estas metricas estan precalculadas sobre el holdout final de Sprint 4. "
+            "Estas metricas estan precalculadas sobre el backtest oficial de Sprint 4. "
             "Sirven para evaluar la operacion del MVP, no como reemplazo directo de la validacion de Sprint 3."
         )
         mc1, mc2, mc3, mc4, mc5 = st.columns(5)
@@ -524,7 +563,7 @@ def main() -> None:
         st.divider()
         st.subheader("Distribucion de facturacion capturada")
         fc1, fc2, fc3 = st.columns(3)
-        fc1.metric("Facturacion total holdout", f"BRL {m['total_spend']:,.2f}")
+        fc1.metric("Facturacion total backtest", f"BRL {m['total_spend']:,.2f}")
         fc2.metric(
             "Facturacion segmento premium real",
             f"BRL {m['premium_spend']:,.2f}",
@@ -535,6 +574,72 @@ def main() -> None:
             f"BRL {m['tp_spend']:,.2f}",
             delta=f"{m['tp_spend'] / m['premium_spend']:.1%} del gasto premium",
         )
+
+        st.divider()
+        st.subheader("Lift y gains del ranking")
+        top10 = lift_table.iloc[0]
+        top20 = lift_table.iloc[1]
+        lg1, lg2, lg3 = st.columns(3)
+        lg1.metric("Top 10% captura", f"{top10['cum_events_pct']:.1%}", delta="de premium reales")
+        lg2.metric("Tasa premium en decil 1", f"{top10['premium_rate_pct']:.2f}%", delta="vs base 1.30%")
+        lg3.metric("Lift primer decil", f"{top10['lift']:.2f}x", delta="vs seleccion aleatoria")
+
+        st.caption(
+            "Ordenamos el backtest por score descendente, lo partimos en 10 grupos iguales y medimos "
+            "cuantos premium reales captura cada tramo del ranking."
+        )
+        st.info(
+            "Lectura correcta: el primer decil no es 100% premium. Su tasa premium es 13.04%, "
+            "pero contiene el 100% de los premium reales del backtest. Por eso el gain acumulado "
+            "salta a 100% desde el primer 10% de la base."
+        )
+
+        gl_col1, gl_col2 = st.columns(2)
+        with gl_col1:
+            st.markdown("**Tabla de deciles**")
+            display_table = lift_table[
+                ["decile", "cases", "responses", "premium_rate_pct", "cum_responses", "gain_pct", "lift", "cum_lift"]
+            ].copy()
+            display_table["premium_rate_pct"] = display_table["premium_rate_pct"].map(lambda x: f"{x:.2f}%")
+            display_table["gain_pct"] = display_table["gain_pct"].map(lambda x: f"{x:.2f}%")
+            display_table["lift"] = display_table["lift"].map(lambda x: f"{x:.2f}")
+            display_table["cum_lift"] = display_table["cum_lift"].map(lambda x: f"{x:.2f}")
+            st.dataframe(display_table, width="stretch", hide_index=True)
+
+        with gl_col2:
+            st.markdown("**Responses por decil y curvas gain / lift**")
+            fig_gl, axes_gl = plt.subplots(3, 1, figsize=(6.2, 9.8), sharex=False)
+            axes_gl[0].bar(
+                lift_table["decile"].astype(str),
+                lift_table["responses"],
+                color=COLOR_NEUTRAL,
+                edgecolor="white",
+            )
+            axes_gl[0].set_ylabel("Premium reales")
+            axes_gl[0].set_title("Responses por decil")
+            axes_gl[0].grid(axis="y", alpha=0.25, linestyle=":")
+
+            x = lift_table["cum_cases_pct"] * 100
+            gains = lift_table["cum_events_pct"] * 100
+            cum_lift = lift_table["cum_lift"]
+
+            axes_gl[1].plot(x, gains, marker="o", linewidth=2.2, color="#1565C0", label="Modelo")
+            axes_gl[1].plot([0, 100], [0, 100], linestyle="--", color=COLOR_RISK, alpha=0.7, label="Aleatorio")
+            axes_gl[1].set_ylabel("% premium acumulado")
+            axes_gl[1].set_title("Cumulative gains")
+            axes_gl[1].legend()
+            axes_gl[1].grid(alpha=0.25, linestyle=":")
+
+            axes_gl[2].plot(x, cum_lift, marker="o", linewidth=2.2, color=COLOR_PREMIUM, label="Lift acumulado")
+            axes_gl[2].plot([0, 100], [1, 1], linestyle="--", color=COLOR_RISK, alpha=0.7, label="Aleatorio")
+            axes_gl[2].set_xlabel("% de la base priorizada")
+            axes_gl[2].set_ylabel("Lift")
+            axes_gl[2].set_title("Cumulative lift")
+            axes_gl[2].legend()
+            axes_gl[2].grid(alpha=0.25, linestyle=":")
+            plt.tight_layout()
+            st.pyplot(fig_gl)
+            plt.close(fig_gl)
 
         st.divider()
         st.subheader("Matriz de confusion y ROI")
@@ -573,7 +678,7 @@ def main() -> None:
             im = ax_cm.imshow(cm_matrix, cmap=CMAP_CONFUSION)
             ax_cm.set_xticks([0, 1], labels=["Pred: NO PREMIUM", "Pred: PREMIUM"])
             ax_cm.set_yticks([0, 1], labels=["Real: NO PREMIUM", "Real: PREMIUM"])
-            ax_cm.set_title("Holdout")
+            ax_cm.set_title("Backtest")
             max_cell = max(cm_matrix[0] + cm_matrix[1])
             for i in range(2):
                 for j in range(2):

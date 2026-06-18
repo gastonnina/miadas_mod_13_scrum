@@ -12,10 +12,10 @@
 bash scripts/build_features.sh
 ```
 
-Este comando deja listos los artefactos de scoring del holdout:
+Este comando deja listos los artefactos de scoring del backtest:
 
-- `data/processed/holdout_features_rfm.parquet`
-- `data/processed/holdout_features_selected.parquet`
+- `data/processed/backtest_features_rfm.parquet`
+- `data/processed/backtest_features_selected.parquet`
 - `data/processed/demo_sample_scoring.parquet`
 - `data/processed/demo_cases.csv`
 

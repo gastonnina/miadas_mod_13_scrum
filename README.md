@@ -49,7 +49,7 @@ Disenar e implementar una solucion de analitica e inteligencia artificial para i
 
 CSV raw
 -> Parquet
--> Split temporal `dev` / `holdout_3m`
+-> Split temporal `dev` / `backtest` / `holdout_3m`
 -> Master table
 -> Feature engineering (RFM y derivadas)
 -> Seleccion de variables
@@ -66,7 +66,7 @@ La variable objetivo `is_premium` se define sobre gasto neto acumulado por clien
 
 Valores usados en los sprints finales:
 - Umbral P80 persistido desde desarrollo: `BRL 197.01`.
-- Distribucion del holdout final: `1.30%` premium reales (`1,253 / 96,096`).
+- Distribucion del backtest oficial: `1.30%` premium reales (`1,253 / 96,096`).
 - Justificacion: alta asimetria del gasto y necesidad de focalizar campanas sobre una minoria de clientes de alto valor.
 
 ## 🛠️ Stack tecnologico
@@ -166,7 +166,7 @@ Activar el entorno primero (venv o conda, ver seccion anterior), luego:
 
 ```bash
 python scripts/csv_to_parquet.py        # CSV → Parquet
-python scripts/create_temporal_split.py # split dev / holdout_3m
+python3 scripts/create_temporal_split.py # split dev / backtest / holdout_3m
 ```
 
 ### Sprint 2 y Sprint 4 — Pipeline reproducible completo
@@ -183,7 +183,7 @@ CONDA_ENV=ai-miadas bash scripts/build_features.sh
 
 El script detecta automaticamente el entorno: `CONDA_ENV` definido → conda, `.venv` en la raiz → venv, de lo contrario usa el `python` en PATH.
 
-Ejecuta en orden los 7 pasos: master table dev → features dev → seleccion experimental → evaluacion vs baseline → master table holdout → features holdout → alineacion final para scoring del MVP.
+Ejecuta en orden los 7 pasos: master table dev → features dev → seleccion experimental → evaluacion vs baseline → master table backtest → features backtest → alineacion final para scoring del MVP.
 
 Pasos individuales (con el entorno activado):
 
@@ -201,16 +201,16 @@ python src/features/feature_selection_experiments.py
 python src/models/evaluate_model.py
 
 # [5/6] Master table HOLDOUT — simulacion mensual ago-oct 2018 (umbral apply)
-python src/data/build_master_table.py --profile-source holdout --threshold-mode apply
+python3 src/data/build_master_table.py --profile-source backtest --threshold-mode apply
 
 # [6/6] Features RFM HOLDOUT
 python src/features/build_rfm_features.py \
-    --input-path data/processed/03_master_table_clean_holdout.parquet \
-    --output-path data/processed/holdout_features_rfm.parquet \
-    --metadata-path data/processed/holdout_features_rfm_metadata.json
+    --input-path data/processed/03_master_table_clean_backtest.parquet \
+    --output-path data/processed/backtest_features_rfm.parquet \
+    --metadata-path data/processed/backtest_features_rfm_metadata.json
 
 # [7/7] Alineacion final al modelo oficial del MVP
-python scripts/build_holdout_scoring_dataset.py
+python3 scripts/build_holdout_scoring_dataset.py --profile-name backtest
 ```
 
 Para detalle de parametros y artefactos generados: [scripts/README.md](scripts/README.md)
@@ -252,7 +252,7 @@ Nota: `scripts/train_model.sh` aun no esta implementado; por ahora la fuente ofi
 
 ### Sprint 4 — MVP en Docker
 
-1. Generar artefactos de scoring del holdout:
+1. Generar artefactos de scoring del backtest:
 
 ```bash
 bash scripts/build_features.sh
@@ -286,7 +286,7 @@ Notas operativas del MVP:
 
 - Los contenedores del dashboard y la API usan `Python 3.12`.
 - `pipeline` y `pipeline-cron` quedaron en el perfil `pipeline`, por lo que `docker compose up` levanta por defecto el MVP y no el pipeline batch.
-- La validacion metodologica principal del clasificador corresponde al Sprint 3; el holdout de Sprint 4 se usa para validacion operativa, explicabilidad y ROI del MVP.
+- La validacion metodologica principal del clasificador corresponde al Sprint 3; el backtest de Sprint 4 se usa para validacion operativa, explicabilidad y ROI del MVP.
 - Para detalle completo de comandos: [reports/sprint_04/guia_ejecucion_mvp.md](reports/sprint_04/guia_ejecucion_mvp.md)
 
 ## 🗺️ Esquema de datos

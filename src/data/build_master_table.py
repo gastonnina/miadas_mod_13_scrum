@@ -56,6 +56,10 @@ class BuildConfig:
         return self.project_root / "data" / "splits" / "temporal_2018q4" / "holdout_3m"
 
     @property
+    def split_backtest_dir(self) -> Path:
+        return self.project_root / "data" / "splits" / "temporal_2018q4" / "backtest"
+
+    @property
     def processed_dir(self) -> Path:
         return self.project_root / "data" / "processed"
 
@@ -64,8 +68,8 @@ class BuildConfig:
         return self.project_root / "data" / "interim"
 
     def validate(self) -> None:
-        if self.profile_source not in {"raw", "dev", "holdout"}:
-            raise ValueError("profile_source debe ser 'raw', 'dev' o 'holdout'")
+        if self.profile_source not in {"raw", "dev", "holdout", "backtest"}:
+            raise ValueError("profile_source debe ser 'raw', 'dev', 'backtest' o 'holdout'")
 
 
 def resolve_project_root() -> Path:
@@ -75,6 +79,7 @@ def resolve_project_root() -> Path:
 def load_dataset(config: BuildConfig, file_stem: str, force_raw: bool = False) -> pd.DataFrame:
     split_dirs = {
         "dev": config.split_dev_dir,
+        "backtest": config.split_backtest_dir,
         "holdout": config.split_holdout_dir,
     }
     # Algunas tablas son transaccionales y deben salir del split temporal;
@@ -84,7 +89,7 @@ def load_dataset(config: BuildConfig, file_stem: str, force_raw: bool = False) -
     )
 
     effective_stem = file_stem
-    if not force_raw and config.profile_source in {"dev", "holdout"}:
+    if not force_raw and config.profile_source in {"dev", "backtest", "holdout"}:
         effective_stem = SPLIT_NAME_MAP.get(file_stem, file_stem)
 
     parquet_path = source_dir / f"{effective_stem}.parquet"
@@ -446,7 +451,7 @@ def load_threshold_metadata(metadata_path: Path) -> dict[str, object]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Construye la master table del proyecto.")
-    parser.add_argument("--profile-source", default="dev", choices=["raw", "dev", "holdout"])
+    parser.add_argument("--profile-source", default="dev", choices=["raw", "dev", "backtest", "holdout"])
     parser.add_argument("--output-path", type=Path, default=None)
     parser.add_argument(
         "--raw-output-path",
@@ -479,7 +484,7 @@ def main() -> None:
     args = parse_args()
     config = BuildConfig(project_root=resolve_project_root(), profile_source=args.profile_source)
 
-    profile_prefix = {"raw": "raw", "dev": "dev", "holdout": "holdout"}.get(config.profile_source, config.profile_source)
+    profile_prefix = {"raw": "raw", "dev": "dev", "backtest": "backtest", "holdout": "holdout"}.get(config.profile_source, config.profile_source)
     raw_output_path = args.raw_output_path or (config.interim_dir / f"01_master_table_raw_{profile_prefix}.parquet")
     clean_output_path = args.output_path or (
         config.processed_dir / f"03_master_table_clean_{profile_prefix}.parquet"
@@ -525,13 +530,14 @@ def main() -> None:
         "holdout": "data/splits/temporal_2018q4/holdout_3m",
         "raw": "data/raw",
     }
-    save_threshold_metadata(
-        threshold,
-        threshold_metadata_path,
-        profile_source=config.profile_source,
-        reference_population=reference_population_map.get(config.profile_source, "data/raw"),
-        mode=threshold_mode_used,
-    )
+    if threshold_mode_used == "fit":
+        save_threshold_metadata(
+            threshold,
+            threshold_metadata_path,
+            profile_source=config.profile_source,
+            reference_population=reference_population_map.get(config.profile_source, "data/raw"),
+            mode=threshold_mode_used,
+        )
 
     print(f"Profile source: {config.profile_source}")
     print(f"Premium threshold: {threshold:.2f}")
@@ -540,7 +546,10 @@ def main() -> None:
     print(f"Clean master table saved to: {clean_output_path}")
     print(f"Compatibility master table saved to: {compatibility_output_path}")
     print(f"Profile markdown saved to: {profile_output_path}")
-    print(f"Threshold metadata saved to: {threshold_metadata_path}")
+    if threshold_mode_used == "fit":
+        print(f"Threshold metadata saved to: {threshold_metadata_path}")
+    else:
+        print(f"Threshold metadata reused from: {threshold_metadata_path}")
     print("Raw validation:", raw_validation)
     print("Clean validation:", clean_validation)
 

@@ -2,9 +2,9 @@
 
 ## Consistencia funcional
 
-- [x] El pipeline genera `data/processed/holdout_features_rfm.parquet`
-- [x] El pipeline genera `data/processed/holdout_features_selected.parquet`
-- [x] El dashboard consume `modelo_final.pkl` y `holdout_features_selected.parquet`
+- [x] El pipeline genera `data/processed/backtest_features_rfm.parquet`
+- [x] El pipeline genera `data/processed/backtest_features_selected.parquet`
+- [x] El dashboard consume `modelo_final.pkl` y `backtest_features_selected.parquet`
 - [x] La API mínima expone `/health` y `/predict`
 - [x] Docker del dashboard construye correctamente
 - [x] Docker de la API construye correctamente
@@ -17,7 +17,7 @@
 - [x] Existe gráfico de ROI en `reports/figures/sprint_04_holdout_evaluation_roi.png`
 - [x] Existe SHAP summary plot global en `reports/figures/sprint_04_shap_beeswarm.png`
 - [x] El notebook `notebooks/sprint_04_integration/04_demo_validation.ipynb` contiene interpretación del SHAP
-- [x] Las métricas del reporte y la app usan el mismo escenario holdout con umbral `0.55`
+- [x] Las métricas del reporte y la app usan el mismo escenario backtest con umbral `0.55`
 
 ## Consistencia documental
 
@@ -30,8 +30,8 @@
 
 - [x] Problema: campañas masivas generan alto costo y bajo retorno
 - [x] Solución: clasificación premium con `LightGBM` sobre pipeline reproducible
-- [x] Evidencia: ROC-AUC `0.9872`, Gini `0.9745`, SHAP local y global
-- [x] Impacto: ROI masivo `-89.57%` vs ROI modelo `+244.79%`
+- [x] Evidencia: ROC-AUC `0.9876`, Gini `0.9751`, SHAP local y global
+- [x] Impacto: ROI masivo `-89.57%` vs ROI modelo `+250.40%`
 - [x] Gobernanza: supervisión humana, versionado y monitoreo de sesgos
 
 ## Pendientes de último momento
@@ -42,4 +42,4 @@
 
 ## Dictamen final
 
-No se detectan contradicciones de fondo entre pipeline, app, métricas, explicabilidad, informe ético y pitch. El sprint queda listo para defensa, sujeto únicamente al ensayo final del equipo y a la preparación de respaldo visual para la demo.
+No se detectan contradicciones de fondo entre pipeline, app, métricas, explicabilidad, informe ético y pitch. El sprint queda listo para defensa con backtest oficial de agosto de 2018, sujeto únicamente al ensayo final del equipo y a la preparación de respaldo visual para la demo.

@@ -20,28 +20,28 @@ A partir de este punto, el **Ingeniero de Datos** puede iniciar la construcción
 
 ## 2. Insumos Analíticos y Datos Generados (Listos para uso)
 
-El notebook [notebooks/sprint_04_integration/04_demo_validation.ipynb](file:///home/gerick/Documents/MIADAS/miadas_mod_13_scrum/notebooks/sprint_04_integration/04_demo_validation.ipynb) ha sido ejecutado completamente sobre la ventana de holdout (`holdout_3m`). Este proceso ha generado los siguientes archivos en la carpeta `data/processed/`:
+El notebook `notebooks/sprint_04_integration/04_demo_validation.ipynb` ha sido ejecutado completamente sobre el backtest oficial de agosto de 2018 (`backtest`). Este proceso ha generado los siguientes archivos en la carpeta `data/processed/`:
 
-### A. Dataset de Inferencia Holdout
-* **Archivo:** `data/processed/holdout_features_selected.parquet`  
-* **Descripción:** Contiene las características del holdout mensual de 96,096 clientes. Se encuentra **filtrado y ordenado** con las 28 columnas exactas requeridas por el preprocesador del modelo final.
+### A. Dataset de Inferencia Backtest
+* **Archivo:** `data/processed/backtest_features_selected.parquet`  
+* **Descripción:** Contiene las características del backtest de 96,096 clientes. Se encuentra **filtrado y ordenado** con las 28 columnas exactas requeridas por el preprocesador del modelo final.
 * **Uso:** Sirve como la base de datos de scoring para el dashboard o la API.
 
 ### B. Muestra de Casos Ejemplo para la Demo
 * **Archivos:** `data/processed/demo_sample_scoring.parquet` y `data/processed/demo_cases.csv`  
-* **Descripción:** Una muestra controlada de 4 clientes reales del holdout para la demo interactiva:
+* **Descripción:** Una muestra controlada de 4 clientes reales del backtest para la demo interactiva:
   * 2 clientes clasificados de forma inequívoca como **Premium** (alta probabilidad).
   * 2 clientes clasificados de forma inequívoca como **Regulares** (baja probabilidad).
 * **Uso:** El dashboard Streamlit puede cargar este archivo ligero directamente para el selector de clientes en la presentación, evitando buscar entre los 96,000 registros.
 
 ### C. Gráfico Comparativo del ROI y Evaluación
 * **Archivo:** `reports/figures/sprint_04_holdout_evaluation_roi.png`  
-* **Descripción:** Imagen que contiene la matriz de confusión del modelo sobre el holdout y la gráfica de barras de la comparativa de ROI.
+* **Descripción:** Imagen que contiene la matriz de confusión del modelo sobre el backtest y la gráfica de barras de la comparativa de ROI.
 * **Uso:** Listo para insertar directamente en las diapositivas de la presentación ejecutiva.
 
 ### D. Gráfico SHAP Global tipo Beeswarm
 * **Archivo:** `reports/figures/sprint_04_shap_beeswarm.png`  
-* **Descripción:** Visual global de explicabilidad que resume cómo las variables más influyentes empujan el score del modelo sobre una muestra del holdout.
+* **Descripción:** Visual global de explicabilidad que resume cómo las variables más influyentes empujan el score del modelo sobre una muestra del backtest.
 * **Uso:** Sirve para sustentar la narrativa técnica del modelo en el pitch y mostrar evidencia visual de explicabilidad más allá del caso individual.
 
 ---
@@ -53,44 +53,44 @@ El notebook [notebooks/sprint_04_integration/04_demo_validation.ipynb](file:///h
 Para defensa académica y ejecutiva, conviene separar dos planos:
 
 - **Sprint 3**: validación metodológica principal del modelo, selección final y tuning.
-- **Sprint 4**: validación de integración del MVP, scoring sobre holdout, explicabilidad SHAP, simulación de ROI y cierre de gobernanza.
+- **Sprint 4**: validación de integración del MVP, scoring sobre backtest, explicabilidad SHAP, simulación de ROI y cierre de gobernanza.
 
 Por tanto, el mensaje correcto no es “el modelo mejoró drásticamente en Sprint 4”, sino “el modelo ya validado en Sprint 3 fue convertido en una solución demostrable y defendible de punta a punta”.
 
-Para la redacción del informe de negocio y el pitch, estos son nuestros números oficiales de holdout:
+Para la redacción del informe de negocio y el pitch, estos son nuestros números oficiales de backtest:
 
-* **Tasa real de premium en holdout (mensual):** **1.30%** (1,253 de 96,096 clientes) bajo el umbral inmutable de **BRL 197.01** (P80 de la población de desarrollo).
+* **Tasa real de premium en backtest:** **1.30%** (1,253 de 96,096 clientes) bajo el umbral inmutable de **BRL 197.01** (P80 de la población de desarrollo).
 * **Regla de decisión del modelo:** Clasificar como premium si la probabilidad estimada es **$\ge$ 0.55** (umbral óptimo obtenido por Optuna).
-* **Tasa de premium predicha en holdout:** **1.73%** (1,659 clientes).
-* **Métricas técnicas en holdout:** ROC-AUC de `0.9872` | Gini de `0.9745` | Precision de `43.10%` | Recall de `57.06%` | F1-Score de `49.11%`.
-* **Explicabilidad global:** Se generó un SHAP Summary Plot tipo beeswarm (`reports/figures/sprint_04_shap_beeswarm.png`) a partir de las contribuciones nativas de LightGBM sobre una muestra del holdout.
+* **Tasa de premium predicha en backtest:** **1.67%** (1,605 clientes).
+* **Métricas técnicas en backtest:** ROC-AUC de `0.9876` | Gini de `0.9751` | Precision de `43.80%` | Recall de `56.11%` | F1-Score de `49.20%`.
+* **Explicabilidad global:** Se generó un SHAP Summary Plot tipo beeswarm (`reports/figures/sprint_04_shap_beeswarm.png`) a partir de las contribuciones nativas de LightGBM sobre una muestra del backtest.
 
-### Nota metodológica importante sobre el holdout
+### Nota metodológica importante sobre el backtest
 
-El holdout técnico del Sprint 4 fue definido como la ventana `2018-08-01` a `2018-10-31`. Sin embargo, al revisar la distribución real de órdenes observamos que el volumen útil del dataset se concentra casi por completo en agosto de 2018, mientras que septiembre y octubre quedan prácticamente vacíos. Por ello:
+El holdout técnico histórico del Sprint 4 fue definido como la ventana `2018-08-01` a `2018-10-31`. Sin embargo, al revisar la distribución real de órdenes observamos que el volumen útil del dataset se concentra casi por completo en agosto de 2018, mientras que septiembre y octubre quedan prácticamente vacíos. Por ello:
 
 - no interpretamos septiembre y octubre como evidencia de crecimiento real o cambio estructural de comportamiento;
 - no usamos esos meses para construir narrativa de tendencia comercial;
-- interpretamos el holdout principalmente como una validación operativa y de integración sobre una ventana final truncada, no como una comparación histórica homogénea mes a mes.
+- formalizamos agosto de 2018 como `backtest` oficial y dejamos `holdout_3m` solo como antecedente técnico del recorte temporal.
 
-En consecuencia, el ROC-AUC holdout de `0.9872` debe defenderse como evidencia de alta separabilidad del escenario evaluado, no como una mejora automática o milagrosa respecto a la validación temporal del Sprint 3.
+En consecuencia, el ROC-AUC backtest de `0.9876` debe defenderse como evidencia de alta separabilidad del escenario evaluado, no como una mejora automática o milagrosa respecto a la validación temporal del Sprint 3.
 
 Si el jurado pregunta por qué el AUC es tan alto, la respuesta recomendada es:
 
-> El holdout del Sprint 4 es más fácil de separar que la validación temporal del Sprint 3 y la etiqueta premium está muy conectada con señales transaccionales. Por eso usamos este resultado sobre todo como validación operativa del MVP y no como única prueba de superioridad del modelo.
+> El backtest del Sprint 4 es más fácil de separar que la validación temporal del Sprint 3 y la etiqueta premium está muy conectada con señales transaccionales. Por eso usamos este resultado sobre todo como validación operativa del MVP y no como única prueba de superioridad del modelo.
 
 ### Captura de Gasto y Simulación de Campaña (BRL 15 costo / BRL 120 retorno)
-1. **Facturación total en holdout:** BRL 985,414.28.
-2. **Facturación capturada:** El segmento premium representa el 52.87% del gasto total. Nuestro modelo, impactando a solo el **1.73% de clientes**, captura el **64.11% de toda la facturación premium** (BRL 333,999.80).
+1. **Facturación total en backtest:** BRL 985,414.28.
+2. **Facturación capturada:** El segmento premium representa el 52.87% del gasto total. Nuestro modelo, impactando a solo el **1.67% de clientes**, captura el **62.96% de toda la facturación premium** (BRL 328,003.99).
 3. **Estrategia Masiva (All):** Costo BRL 1.44M, Retorno BRL 150K $\rightarrow$ **Pérdida neta de BRL -1.29 millones (ROI: -89.57%)**.
-4. **Estrategia del Modelo (Umbral 0.55):** Costo BRL 24,885, Retorno BRL 85.8K $\rightarrow$ **Utilidad neta de BRL +60,915.00 (ROI: +244.79%)**.
-5. **Ahorro generado:** Reducción del **98.27% del costo de marketing** (ahorro de **BRL 1,416,555.00**).
+4. **Estrategia del Modelo (Umbral 0.55):** Costo BRL 24,075, Retorno BRL 84,360.00 $\rightarrow$ **Utilidad neta de BRL +60,285.00 (ROI: +250.40%)**.
+5. **Ahorro generado:** Reducción del **98.33% del costo de marketing** (ahorro de **BRL 1,417,365.00**).
 
-### Cómo defender el AUC holdout ante el jurado
+### Cómo defender el AUC backtest ante el jurado
 
 Una formulación defendible es la siguiente:
 
-> El ROC-AUC holdout de `0.9872` no se presenta como prueba única de superioridad definitiva del modelo. Lo interpretamos como resultado de un escenario holdout más separable y de una etiqueta premium muy conectada con señales transaccionales. La comparación metodológica principal del modelo sigue siendo la validación temporal del Sprint 3; el holdout del Sprint 4 se usa sobre todo como validación operativa, explicativa y de negocio para el MVP.
+> El ROC-AUC backtest de `0.9876` no se presenta como prueba única de superioridad definitiva del modelo. Lo interpretamos como resultado de un escenario de agosto de 2018 más separable y de una etiqueta premium muy conectada con señales transaccionales. La comparación metodológica principal del modelo sigue siendo la validación temporal del Sprint 3; el backtest del Sprint 4 se usa sobre todo como validación operativa, explicativa y de negocio para el MVP.
 
 ---
 
@@ -102,7 +102,7 @@ A partir de este punto, cada rol tiene asignadas las siguientes actividades para
 
 #### 1. Implementar la interfaz en `app/dashboard/app.py`
 Debe construirse el MVP de visualización utilizando **Streamlit**.
-* **Entradas:** Cargar el modelo `models/final/modelo_final.pkl` y leer la muestra demo `data/processed/demo_sample_scoring.parquet` (o la base completa en `holdout_features_selected.parquet`).
+* **Entradas:** Cargar el modelo `models/final/modelo_final.pkl` y leer la muestra demo `data/processed/demo_sample_scoring.parquet` (o la base completa en `backtest_features_selected.parquet`).
 * **Componentes visuales sugeridos:**
   * Selector de cliente (usando el ID único).
   * Panel de predicción con badges distintivas (Premium vs. Regular).
@@ -133,7 +133,7 @@ Utilizar los hallazgos del modelo para documentar los riesgos éticos:
   * **Problema:** Desperdicio de dinero en campañas de marketing masivas.
   * **Solución:** Clasificador LightGBM basado en Pareto y transacciones operativas.
   * **Demo:** Mostrar cómo se scorea un cliente en vivo y se explican sus variables con SHAP.
-  * **Impacto:** Pasar de perder BRL 1.29M (Campaña Masiva) a ganar BRL 61K (Campaña del Modelo) con un ROI de +244%.
+  * **Impacto:** Pasar de perder BRL 1.29M (Campaña Masiva) a ganar BRL 60K (Campaña del Modelo) con un ROI de +250.40%.
 
 ---
 

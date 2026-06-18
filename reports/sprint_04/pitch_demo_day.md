@@ -16,7 +16,7 @@ Hoy una campaña masiva trata igual a todos los clientes. Eso implica alto costo
 
 ### 2. Solución
 
-Construimos un clasificador basado en LightGBM que reutiliza el pipeline del proyecto, transforma el holdout mensual y asigna a cada cliente una probabilidad de pertenecer al segmento premium. El modelo final se entrega como `modelo_final.pkl` y se consume desde un MVP en Streamlit y una API mínima.
+Construimos un clasificador basado en LightGBM que reutiliza el pipeline del proyecto, transforma el backtest oficial de agosto de 2018 y asigna a cada cliente una probabilidad de pertenecer al segmento premium. El modelo final se entrega como `modelo_final.pkl` y se consume desde un MVP en Streamlit y una API mínima.
 
 Apoyo visual recomendado:
 
@@ -31,17 +31,17 @@ Apoyo visual recomendado:
 
 ### 4. Evidencia técnica
 
-- ROC-AUC holdout: `0.9872`
-- Gini holdout: `0.9745`
-- Precision: `43.10%`
-- Recall: `57.06%`
-- F1-Score: `49.11%`
+- ROC-AUC backtest: `0.9876`
+- Gini backtest: `0.9751`
+- Precision: `43.80%`
+- Recall: `56.11%`
+- F1-Score: `49.20%`
 
 Además, generamos un SHAP Summary Plot tipo beeswarm para mostrar que la señal principal del modelo proviene de variables transaccionales y de valor comercial como `delivered_orders`, `max_payment_installments`, `total_items` y `top_category_is_high_value`.
 
 Frase sugerida para defensa:
 
-> Este ROC-AUC holdout no lo vendemos como una mejora milagrosa del modelo frente al Sprint 3. Lo leemos como un escenario final más separable, útil para validar integración, scoring, explicabilidad y ROI del MVP.
+> Este ROC-AUC backtest no lo vendemos como una mejora milagrosa del modelo frente al Sprint 3. Lo leemos como un escenario final más separable, útil para validar integración, scoring, explicabilidad y ROI del MVP.
 
 Frase complementaria:
 
@@ -56,9 +56,9 @@ Escenario tradicional:
 
 Escenario con modelo:
 
-- Campaña focalizada sobre `1,659` clientes
-- ROI estimado: `+244.79%`
-- Ahorro en costo de marketing: `BRL 1,416,555.00`
+- Campaña focalizada sobre `1,605` clientes
+- ROI estimado: `+250.40%`
+- Ahorro en costo de marketing: `BRL 1,417,365.00`
 
 En otras palabras, pasamos de una estrategia con pérdida estructural a una campaña optimizada con utilidad positiva y foco mucho más eficiente.
 
@@ -66,7 +66,7 @@ En otras palabras, pasamos de una estrategia con pérdida estructural a una camp
 
 El modelo también usa señales logísticas y de pago, por lo que no proponemos automatización ciega. Recomendamos supervisión humana, versionado explícito del artefacto y monitoreo periódico de sesgos geográficos o financieros.
 
-También aclaramos una limitación metodológica: el holdout técnico abarca agosto a octubre de 2018, pero el volumen real se concentra casi por completo en agosto. Por eso no usamos septiembre y octubre para argumentar tendencias de crecimiento del negocio.
+También aclaramos una limitación metodológica: el holdout técnico abarca agosto a octubre de 2018, pero el volumen real se concentra casi por completo en agosto. Por eso formalizamos agosto como backtest oficial y no usamos septiembre y octubre para argumentar tendencias de crecimiento del negocio.
 
 ### 7. Cierre
 
@@ -101,11 +101,11 @@ Principalmente señales de intensidad transaccional y valor comercial: más órd
 
 ### ¿Qué ganamos frente a una campaña masiva?
 
-Pasamos de una estrategia con ROI estimado negativo (`-89.57%`) a una estrategia focalizada con ROI positivo (`+244.79%`) y reducción muy fuerte del costo comercial.
+Pasamos de una estrategia con ROI estimado negativo (`-89.57%`) a una estrategia focalizada con ROI positivo (`+250.40%`) y reducción muy fuerte del costo comercial.
 
-### ¿Por qué el ROC-AUC holdout es tan alto?
+### ¿Por qué el ROC-AUC backtest es tan alto?
 
-Porque el escenario holdout quedó mucho más separable que la validación del Sprint 3 y la etiqueta premium está fuertemente asociada a señales transaccionales. Lo defendemos como validación operativa del MVP, no como comparación directa uno a uno contra la validación temporal previa.
+Porque el escenario backtest quedó mucho más separable que la validación del Sprint 3 y la etiqueta premium está fuertemente asociada a señales transaccionales. Lo defendemos como validación operativa del MVP, no como comparación directa uno a uno contra la validación temporal previa.
 
 ### ¿Entonces cuál es el verdadero aporte del Sprint 4?
 
