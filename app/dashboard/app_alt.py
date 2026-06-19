@@ -119,7 +119,7 @@ _AX = dict(
     gridcolor="rgba(176,212,255,0.05)",
     linecolor="rgba(176,212,255,0.09)",
     tickfont=dict(size=10, color=COLOR_MUTED),
-    titlefont=dict(size=10, color=COLOR_MUTED),
+    title_font=dict(size=10, color=COLOR_MUTED),
     zerolinecolor="rgba(176,212,255,0.12)",
 )
 
@@ -793,10 +793,10 @@ def render_lift_charts(lift_table: pd.DataFrame) -> None:
     for r in range(1, 4):
         fig.update_xaxes(row=r, col=1, **_AX)
         fig.update_yaxes(row=r, col=1, **_AX)
-    fig.update_xaxes(title_text="% de la base priorizada", row=3, col=1, titlefont=dict(size=10, color=COLOR_MUTED))
-    fig.update_yaxes(title_text="Premium reales", row=1, col=1, titlefont=dict(size=10, color=COLOR_MUTED))
-    fig.update_yaxes(title_text="% premium acumulado", row=2, col=1, titlefont=dict(size=10, color=COLOR_MUTED))
-    fig.update_yaxes(title_text="Lift", row=3, col=1, titlefont=dict(size=10, color=COLOR_MUTED))
+    fig.update_xaxes(title_text="% de la base priorizada", row=3, col=1, title_font=dict(size=10, color=COLOR_MUTED))
+    fig.update_yaxes(title_text="Premium reales", row=1, col=1, title_font=dict(size=10, color=COLOR_MUTED))
+    fig.update_yaxes(title_text="% premium acumulado", row=2, col=1, title_font=dict(size=10, color=COLOR_MUTED))
+    fig.update_yaxes(title_text="Lift", row=3, col=1, title_font=dict(size=10, color=COLOR_MUTED))
 
     # Style subplot titles
     for ann in fig.layout.annotations:
