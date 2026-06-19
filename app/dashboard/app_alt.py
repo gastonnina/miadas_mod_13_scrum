@@ -12,7 +12,7 @@ from plotly.subplots import make_subplots
 
 warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
 
-# ── Rutas ──────────────────────────────────────────────────────────────────
+# ── Project root ────────────────────────────────────────────────────────────
 def _find_project_root() -> Path:
     candidate = Path(__file__).resolve()
     for parent in [candidate, *candidate.parents]:
@@ -33,9 +33,11 @@ THRESHOLD = 0.55
 COLOR_PREMIUM = "#39a96b"
 COLOR_RISK = "#d95d39"
 COLOR_NEUTRAL = "#5b7c99"
-COLOR_TEXT = "#213547"
+COLOR_TEXT = "#dce6f0"
+COLOR_MUTED = "#7a8fa6"
+COLOR_CARD = "#141b24"
+COLOR_ELEVATED = "#1c2636"
 
-# Metricas pre-computadas holdout_3m (umbral 0.55)
 HOLDOUT_METRICS = {
     "roc_auc": 0.9872,
     "gini": 0.9745,
@@ -56,7 +58,6 @@ HOLDOUT_METRICS = {
     "tp_count": 715,
 }
 
-# Metricas pre-computadas backtest agosto 2018 (umbral 0.55)
 BACKTEST_METRICS = {
     "roc_auc": 0.9876,
     "gini": 0.9751,
@@ -92,7 +93,7 @@ DATASET_CONFIGS: dict[str, dict] = {
         "features_file": "holdout_features_selected.parquet",
         "master_file": "03_master_table_clean_holdout.parquet",
         "metrics": HOLDOUT_METRICS,
-        "label": "holdout\\_3m (96 096 clientes)",
+        "label": "holdout_3m · 96 096 clientes",
         "tab_title": "Holdout y ROI",
         "has_lift": False,
     },
@@ -106,12 +107,285 @@ DATASET_CONFIGS: dict[str, dict] = {
     },
 }
 
-_PLOTLY_LAYOUT = dict(
-    plot_bgcolor="rgba(0,0,0,0)",
+# ── Plotly dark theme ───────────────────────────────────────────────────────
+_PBG = dict(
+    plot_bgcolor=COLOR_CARD,
     paper_bgcolor="rgba(0,0,0,0)",
-    font=dict(color=COLOR_TEXT),
-    margin=dict(l=10, r=10, t=40, b=10),
+    font=dict(color=COLOR_TEXT, family="Space Mono, monospace", size=11),
+    margin=dict(l=10, r=10, t=44, b=10),
+    hoverlabel=dict(bgcolor="#1c2636", bordercolor="#2e3d52", font=dict(color=COLOR_TEXT, size=11)),
 )
+_AX = dict(
+    gridcolor="rgba(176,212,255,0.05)",
+    linecolor="rgba(176,212,255,0.09)",
+    tickfont=dict(size=10, color=COLOR_MUTED),
+    titlefont=dict(size=10, color=COLOR_MUTED),
+    zerolinecolor="rgba(176,212,255,0.12)",
+)
+
+# ── CSS: Intelligence Terminal aesthetic ────────────────────────────────────
+_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+    --bg:       #0c1117;
+    --card:     #141b24;
+    --elevated: #1c2636;
+    --border:   rgba(148,180,220,0.09);
+    --green:    #39a96b;
+    --red:      #d95d39;
+    --blue:     #5b7c99;
+    --text:     #dce6f0;
+    --muted:    #7a8fa6;
+    --syne:     'Syne', sans-serif;
+    --mono:     'Space Mono', monospace;
+}
+
+/* ── Global ── */
+.stApp, .stApp > div, [data-testid="stAppViewContainer"] {
+    background: var(--bg) !important;
+}
+.main .block-container {
+    background: transparent !important;
+    padding-top: 1.2rem !important;
+    max-width: 1360px !important;
+}
+h1, h2, h3, h4 { font-family: var(--syne) !important; color: var(--text) !important; }
+p, li, span, label, div { color: var(--text); }
+.stCaption p { color: var(--muted) !important; font-family: var(--mono) !important; font-size: 0.68rem !important; }
+hr { border-color: var(--border) !important; margin: 1.5rem 0 !important; }
+
+/* ── Sidebar ── */
+section[data-testid="stSidebar"] {
+    background: var(--card) !important;
+    border-right: 1px solid var(--border) !important;
+}
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3,
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] label { color: var(--text) !important; }
+section[data-testid="stSidebar"] [data-testid="stMetric"] {
+    background: var(--elevated) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    padding: 0.65rem 0.9rem !important;
+}
+
+/* ── Metrics ── */
+[data-testid="stMetric"] {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    padding: 0.85rem 1rem !important;
+}
+[data-testid="stMetricLabel"] p {
+    color: var(--muted) !important;
+    font-family: var(--mono) !important;
+    font-size: 0.65rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+}
+[data-testid="stMetricValue"] {
+    color: var(--text) !important;
+    font-family: var(--mono) !important;
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+}
+[data-testid="stMetricDelta"] {
+    font-family: var(--mono) !important;
+    font-size: 0.68rem !important;
+}
+
+/* ── Tabs ── */
+.stTabs [data-baseweb="tab-list"] {
+    background: var(--card) !important;
+    border-radius: 10px !important;
+    padding: 4px !important;
+    border: 1px solid var(--border) !important;
+    gap: 2px !important;
+}
+.stTabs [data-baseweb="tab"] {
+    background: transparent !important;
+    color: var(--muted) !important;
+    font-family: var(--syne) !important;
+    font-size: 0.78rem !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    padding: 0.45rem 1.1rem !important;
+    transition: all 0.15s ease !important;
+}
+.stTabs [aria-selected="true"] {
+    background: var(--elevated) !important;
+    color: var(--text) !important;
+}
+[data-testid="stTabPanel"] { padding-top: 1.5rem !important; }
+
+/* ── Buttons ── */
+.stButton button {
+    background: var(--elevated) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+    border-radius: 8px !important;
+    font-family: var(--mono) !important;
+    font-size: 0.75rem !important;
+}
+
+/* ── Inputs & widgets ── */
+.stSelectbox [data-baseweb="select"] > div { background: var(--card) !important; border-color: var(--border) !important; }
+.stTextInput input { background: var(--card) !important; border-color: var(--border) !important; color: var(--text) !important; }
+.stSlider [data-baseweb="slider"] { background: var(--elevated) !important; }
+.stRadio label { color: var(--text) !important; font-family: var(--mono) !important; font-size: 0.78rem !important; }
+
+/* ── Alerts ── */
+[data-testid="stAlert"] { border-radius: 10px !important; }
+.stInfo  { background: rgba(91,124,153,0.1)  !important; border: 1px solid rgba(91,124,153,0.3)  !important; }
+.stWarning { background: rgba(217,93,57,0.08) !important; border: 1px solid rgba(217,93,57,0.3)  !important; }
+
+/* ── Dataframe ── */
+[data-testid="stDataFrame"] {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+}
+
+/* ── Expanders ── */
+.streamlit-expanderHeader {
+    background: var(--card) !important;
+    color: var(--muted) !important;
+    font-family: var(--mono) !important;
+    font-size: 0.75rem !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--border) !important;
+}
+.streamlit-expanderContent {
+    background: var(--card) !important;
+    border-color: var(--border) !important;
+}
+
+/* ── Custom HTML components ── */
+
+/* Score hero */
+.score-hero {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.6rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    margin-bottom: 1.2rem;
+    position: relative;
+    overflow: hidden;
+}
+.score-hero::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    pointer-events: none;
+}
+.score-hero.premium::before { background: radial-gradient(circle, rgba(57,169,107,0.10) 0%, transparent 70%); }
+.score-hero.regular::before { background: radial-gradient(circle, rgba(217,93,57,0.08) 0%, transparent 70%); }
+
+.sh-prob { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; }
+.sh-prob-num { font-family: var(--mono); font-size: 4.2rem; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+.sh-prob-num.premium { color: var(--green); }
+.sh-prob-num.regular { color: var(--red); }
+.sh-prob-lbl { font-family: var(--mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-top: 0.25rem; }
+
+.sh-center { flex: 1; min-width: 0; }
+.sh-classification {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.3rem 0.85rem;
+    border-radius: 999px;
+    font-family: var(--mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+    margin-bottom: 0.8rem;
+}
+.sh-classification.premium { background: rgba(57,169,107,0.14); color: var(--green); border: 1px solid rgba(57,169,107,0.32); }
+.sh-classification.regular { background: rgba(217,93,57,0.12); color: var(--red); border: 1px solid rgba(217,93,57,0.32); }
+
+.sh-bar-wrap { height: 5px; background: var(--elevated); border-radius: 3px; overflow: hidden; margin-bottom: 0.3rem; }
+.sh-bar-fill { height: 100%; border-radius: 3px; }
+.sh-threshold { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); }
+
+.sh-right { flex: 0 0 auto; display: flex; flex-direction: column; gap: 0.55rem; border-left: 1px solid var(--border); padding-left: 2rem; }
+.sh-meta-row { display: flex; flex-direction: column; gap: 0.05rem; }
+.sh-meta-lbl { font-family: var(--mono); font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.sh-meta-val { font-family: var(--mono); font-size: 0.78rem; color: var(--text); font-weight: 700; }
+.sh-meta-val.green { color: var(--green); }
+.sh-meta-val.red { color: var(--red); }
+.sh-meta-val.muted { color: var(--muted); }
+
+/* Section eyebrow */
+.eyebrow {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin: 1.75rem 0 0.6rem 0;
+}
+.eyebrow-num { font-family: var(--mono); font-size: 0.58rem; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0.15rem 0.45rem; letter-spacing: 0.06em; }
+.eyebrow-line { flex: 1; height: 1px; background: var(--border); }
+.eyebrow-label { font-family: var(--mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+
+/* Profile card */
+.profile-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    height: 100%;
+}
+.profile-title { font-family: var(--syne); font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+.profile-stat { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+.profile-stat:last-child { border-bottom: none; }
+.profile-stat-lbl { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.profile-stat-val { font-family: var(--mono); font-size: 0.95rem; font-weight: 700; color: var(--text); }
+
+/* Truth badge */
+.truth-badge {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    font-family: var(--mono); font-size: 0.68rem; font-weight: 700;
+    margin-top: 0.5rem;
+}
+.truth-badge.ok  { background: rgba(57,169,107,0.1); color: var(--green); border: 1px solid rgba(57,169,107,0.3); }
+.truth-badge.err { background: rgba(217,93,57,0.1);  color: var(--red);   border: 1px solid rgba(217,93,57,0.3);  }
+
+/* Narrative block */
+.narrative {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    border-radius: 0 10px 10px 0;
+    padding: 0.85rem 1.2rem;
+    margin: 0.6rem 0 1.2rem 0;
+}
+.narrative.green { border-left-color: var(--green); }
+.narrative.red   { border-left-color: var(--red);   }
+.narrative-t { font-family: var(--syne); font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 0.3rem; }
+.narrative-b { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); line-height: 1.7; }
+
+/* ROI comparison inline */
+.roi-compare { display: flex; gap: 1rem; margin: 0.75rem 0; }
+.roi-block {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    display: flex; flex-direction: column; gap: 0.2rem;
+}
+.roi-block.good  { border-top: 3px solid var(--green); }
+.roi-block.bad   { border-top: 3px solid var(--red);   }
+.roi-block-lbl   { font-family: var(--mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.roi-block-val   { font-family: var(--mono); font-size: 1.6rem; font-weight: 700; }
+.roi-block-val.good { color: var(--green); }
+.roi-block-val.bad  { color: var(--red);   }
+.roi-block-sub   { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); }
+</style>
+"""
 
 
 # ── Cache de recursos ───────────────────────────────────────────────────────
@@ -144,7 +418,6 @@ def load_demo_sample() -> pd.DataFrame:
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
 def compute_contributions(pipeline, X_row: pd.DataFrame) -> pd.Series:
-    """Contribuciones locales via pred_contrib nativo de LightGBM."""
     preprocessor = pipeline.named_steps["preprocessor"]
     lgb_model = pipeline.named_steps["model"]
     X_proc = preprocessor.transform(X_row)
@@ -153,31 +426,6 @@ def compute_contributions(pipeline, X_row: pd.DataFrame) -> pd.Series:
     contribs = lgb_model.predict(X_proc_df, pred_contrib=True)
     clean_names = [n.replace("num__", "").replace("cat__", "") for n in feature_names]
     return pd.Series(contribs[0, :-1], index=clean_names).sort_values(ascending=False)
-
-
-def render_contribution_chart(contrib: pd.Series, title: str) -> None:
-    top5 = contrib.head(5)
-    bot5 = contrib.tail(5)
-    combined = pd.concat([top5, bot5.iloc[::-1]])
-
-    colors = [COLOR_PREMIUM if v >= 0 else COLOR_RISK for v in combined]
-
-    fig = go.Figure(go.Bar(
-        x=combined.values,
-        y=combined.index,
-        orientation="h",
-        marker_color=colors,
-        hovertemplate="<b>%{y}</b><br>Contribucion: %{x:.4f}<extra></extra>",
-    ))
-    fig.add_vline(x=0, line_color=COLOR_NEUTRAL, line_width=1)
-    fig.update_layout(
-        title=dict(text=title, font=dict(size=13)),
-        xaxis_title="Contribucion al score (log-odds)",
-        yaxis=dict(autorange="reversed"),
-        height=350,
-        **_PLOTLY_LAYOUT,
-    )
-    st.plotly_chart(fig, use_container_width=True)
 
 
 def safe_int(value, default: str = "N/A"):
@@ -265,7 +513,146 @@ def build_lift_table(_pipeline, df: pd.DataFrame, selected_cols: list[str]) -> p
     return lift_table
 
 
-def render_confusion_matrix(cm: dict[str, int], title: str) -> None:
+# ── Presentation helpers ─────────────────────────────────────────────────────
+
+def eyebrow(num: str, label: str) -> None:
+    st.markdown(
+        f'<div class="eyebrow">'
+        f'<span class="eyebrow-num">{num}</span>'
+        f'<span class="eyebrow-line"></span>'
+        f'<span class="eyebrow-label">{label}</span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def narrative(title: str, body: str, color: str = "") -> None:
+    cls = f"narrative {color}".strip()
+    st.markdown(
+        f'<div class="{cls}"><div class="narrative-t">{title}</div>'
+        f'<div class="narrative-b">{body}</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def render_score_hero(
+    prob: float,
+    is_pred_premium: bool,
+    cid: str,
+    is_true_premium: int | None,
+) -> None:
+    cls = "premium" if is_pred_premium else "regular"
+    label = "★ CLIENTE PREMIUM" if is_pred_premium else "◇ NO PREMIUM"
+    bar_color = COLOR_PREMIUM if is_pred_premium else COLOR_RISK
+    bar_width = f"{prob * 100:.1f}%"
+    prob_str = f"{prob:.1%}"
+
+    truth_html = ""
+    if is_true_premium is not None:
+        real = "PREMIUM" if is_true_premium else "NO PREMIUM"
+        correct = is_pred_premium == bool(is_true_premium)
+        truth_cls = "ok" if correct else "err"
+        truth_icon = "✓" if correct else "✗"
+        truth_html = (
+            f'<div class="truth-badge {truth_cls}">'
+            f'{truth_icon}&nbsp;Etiqueta real: {real}'
+            f'</div>'
+        )
+
+    st.markdown(
+        f"""
+        <div class="score-hero {cls}">
+          <div class="sh-prob">
+            <span class="sh-prob-num {cls}">{prob_str}</span>
+            <span class="sh-prob-lbl">probabilidad premium</span>
+          </div>
+
+          <div class="sh-center">
+            <div class="sh-classification {cls}">{label}</div>
+            {truth_html}
+            <div class="sh-bar-wrap" style="margin-top:0.9rem;">
+              <div class="sh-bar-fill" style="width:{bar_width}; background:{bar_color};"></div>
+            </div>
+            <p class="sh-threshold">umbral de decisión: {THRESHOLD:.0%}
+              &nbsp;·&nbsp; modelo: LightGBM + ColumnTransformer
+            </p>
+          </div>
+
+          <div class="sh-right">
+            <div class="sh-meta-row">
+              <span class="sh-meta-lbl">cliente ID</span>
+              <span class="sh-meta-val muted">{cid[:20]}…</span>
+            </div>
+            <div class="sh-meta-row">
+              <span class="sh-meta-lbl">score crudo</span>
+              <span class="sh-meta-val">{prob:.6f}</span>
+            </div>
+            <div class="sh-meta-row">
+              <span class="sh-meta-lbl">umbral</span>
+              <span class="sh-meta-val">{THRESHOLD:.2f}</span>
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_profile_card(info_row: pd.DataFrame, feat_row: pd.DataFrame) -> None:
+    if info_row.empty:
+        st.markdown(
+            '<div class="profile-card"><p class="profile-title">Perfil no disponible</p></div>',
+            unsafe_allow_html=True,
+        )
+        return
+    info = info_row.iloc[0]
+    recency = feat_row["recency_days"].values[0] if "recency_days" in feat_row.columns else None
+    stats = [
+        ("Gasto total (BRL)", safe_float_metric(info.get("total_spent", 0))),
+        ("Órdenes",           str(safe_int(info.get("total_orders", 0), default="0"))),
+        ("Ticket promedio",   safe_float_metric(info.get("avg_ticket", 0))),
+        ("Estado",            str(info.get("customer_state", "N/A"))),
+        ("Recencia (días)",   str(safe_int(recency))),
+    ]
+    rows_html = "".join(
+        f'<div class="profile-stat">'
+        f'<span class="profile-stat-lbl">{lbl}</span>'
+        f'<span class="profile-stat-val">{val}</span>'
+        f'</div>'
+        for lbl, val in stats
+    )
+    st.markdown(
+        f'<div class="profile-card"><p class="profile-title">Perfil del cliente</p>{rows_html}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def render_contribution_chart(contrib: pd.Series, title: str) -> None:
+    top5 = contrib.head(5)
+    bot5 = contrib.tail(5)
+    combined = pd.concat([top5, bot5.iloc[::-1]])
+    colors = [COLOR_PREMIUM if v >= 0 else COLOR_RISK for v in combined]
+
+    fig = go.Figure(go.Bar(
+        x=combined.values,
+        y=combined.index,
+        orientation="h",
+        marker_color=colors,
+        hovertemplate="<b>%{y}</b><br>Contribución: %{x:.4f}<extra></extra>",
+    ))
+    fig.add_vline(x=0, line_color=COLOR_NEUTRAL, line_width=1)
+    fig.update_layout(
+        title=dict(text=title, font=dict(size=12, color=COLOR_MUTED)),
+        xaxis_title="Contribución al score (log-odds)",
+        yaxis=dict(autorange="reversed", **_AX),
+        xaxis=dict(**_AX),
+        height=360,
+        **_PBG,
+    )
+    st.plotly_chart(fig, width="stretch")
+
+
+def render_confusion_matrix(cm: dict[str, int], label: str) -> None:
     cm_matrix = [[cm["tn"], cm["fp"]], [cm["fn"], cm["tp"]]]
     x_labels = ["Pred: NO PREMIUM", "Pred: PREMIUM"]
     y_labels = ["Real: NO PREMIUM", "Real: PREMIUM"]
@@ -274,40 +661,36 @@ def render_confusion_matrix(cm: dict[str, int], title: str) -> None:
         z=cm_matrix,
         x=x_labels,
         y=y_labels,
-        colorscale="GnBu",
-        showscale=True,
+        colorscale="Blues",
+        showscale=False,
         hovertemplate="%{y} → %{x}<br>Conteo: %{z:,}<extra></extra>",
     ))
-
     max_cell = max(cm_matrix[0] + cm_matrix[1])
     for i in range(2):
         for j in range(2):
             val = cm_matrix[i][j]
-            text_color = "white" if val >= max_cell * 0.65 else COLOR_TEXT
+            txt_color = "white" if val >= max_cell * 0.55 else "#1a2332"
             fig.add_annotation(
-                x=x_labels[j],
-                y=y_labels[i],
+                x=x_labels[j], y=y_labels[i],
                 text=f"<b>{val:,}</b>",
                 showarrow=False,
-                font=dict(size=15, color=text_color),
+                font=dict(size=15, color=txt_color),
             )
-
+    fig.update_xaxes(showgrid=False, linecolor="rgba(0,0,0,0)", tickfont=dict(size=10, color=COLOR_MUTED))
+    fig.update_yaxes(showgrid=False, linecolor="rgba(0,0,0,0)", tickfont=dict(size=10, color=COLOR_MUTED))
     fig.update_layout(
-        title=dict(text=title, font=dict(size=13)),
-        height=320,
-        **_PLOTLY_LAYOUT,
+        title=dict(text=label, font=dict(size=12, color=COLOR_MUTED)),
+        height=300,
+        **_PBG,
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_roi_bars(m: dict) -> None:
-    labels = ["Campana Masiva<br>(Target All)", "Campana Optimizada<br>(Modelo, umbral 0.55)"]
+    labels = ["Campaña Masiva<br>(target all)", "Campaña Optimizada<br>(modelo · umbral 0.55)"]
     rois = [m["roi_masiva"], m["roi_modelo"]]
     colors = [COLOR_RISK, COLOR_PREMIUM]
-    subtexts = [
-        f"{m['n_total']:,} clientes",
-        f"{m['n_pred_premium']:,} clientes",
-    ]
+    subtexts = [f"{m['n_total']:,} clientes", f"{m['n_pred_premium']:,} clientes"]
 
     fig = go.Figure(go.Bar(
         x=labels,
@@ -315,54 +698,57 @@ def render_roi_bars(m: dict) -> None:
         marker_color=colors,
         text=[f"<b>{v:.2f}%</b>" for v in rois],
         textposition="outside",
+        textfont=dict(color=COLOR_TEXT, size=12),
         customdata=subtexts,
         hovertemplate="<b>%{x}</b><br>ROI: %{y:.2f}%<br>%{customdata}<extra></extra>",
-        width=0.45,
+        width=0.5,
     ))
     fig.add_hline(y=0, line_color=COLOR_NEUTRAL, line_width=1)
+    fig.update_xaxes(tickfont=dict(size=10, color=COLOR_MUTED), linecolor="rgba(0,0,0,0)", showgrid=False)
+    fig.update_yaxes(title_text="ROI (%)", **_AX)
     fig.update_layout(
-        title=dict(text="Retorno por estrategia", font=dict(size=13)),
-        yaxis_title="ROI (%)",
-        height=350,
-        **_PLOTLY_LAYOUT,
+        title=dict(text="ROI por estrategia de campaña", font=dict(size=12, color=COLOR_MUTED)),
+        height=330,
+        **_PBG,
     )
-    st.plotly_chart(fig, use_container_width=True)
-    st.caption("Supuesto: costo BRL 15 por cliente · retorno BRL 120 por premium convertido.")
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_lift_charts(lift_table: pd.DataFrame) -> None:
-    x_pct = lift_table["cum_cases_pct"] * 100
-    gains = lift_table["cum_events_pct"] * 100
-    cum_lift = lift_table["cum_lift"]
+    x_pct  = lift_table["cum_cases_pct"] * 100
+    gains  = lift_table["cum_events_pct"] * 100
+    c_lift = lift_table["cum_lift"]
 
     fig = make_subplots(
-        rows=3,
-        cols=1,
+        rows=3, cols=1,
         shared_xaxes=False,
-        subplot_titles=["Responses por decil", "Cumulative gains", "Cumulative lift"],
-        vertical_spacing=0.1,
+        subplot_titles=[
+            "Respuestas por decil",
+            "Curva de ganancia acumulada",
+            "Lift acumulado",
+        ],
+        vertical_spacing=0.09,
     )
 
-    # ── Row 1: Responses por decil ────────────────────────────────────────
+    # Row 1 — responses per decile
     fig.add_trace(
         go.Bar(
             x=lift_table["decile"].astype(str),
             y=lift_table["responses"],
             marker_color=COLOR_NEUTRAL,
             name="Premium reales",
-            hovertemplate="Decil %{x}: <b>%{y}</b> premium reales<extra></extra>",
+            hovertemplate="Decil %{x} → <b>%{y}</b> premium<extra></extra>",
         ),
         row=1, col=1,
     )
 
-    # ── Row 2: Cumulative gains ───────────────────────────────────────────
+    # Row 2 — cumulative gains
     fig.add_trace(
         go.Scatter(
-            x=x_pct,
-            y=gains,
+            x=x_pct, y=gains,
             mode="lines+markers",
-            line=dict(color="#1565C0", width=2.2),
-            marker=dict(size=6),
+            line=dict(color="#4fa3e0", width=2.2),
+            marker=dict(size=6, color="#4fa3e0"),
             name="Modelo",
             hovertemplate="Top %{x:.1f}% → captura %{y:.1f}% premium<extra></extra>",
         ),
@@ -370,25 +756,23 @@ def render_lift_charts(lift_table: pd.DataFrame) -> None:
     )
     fig.add_trace(
         go.Scatter(
-            x=[0, 100],
-            y=[0, 100],
+            x=[0, 100], y=[0, 100],
             mode="lines",
-            line=dict(color=COLOR_RISK, dash="dash", width=1.5),
+            line=dict(color=COLOR_RISK, dash="dash", width=1.2),
             name="Aleatorio",
-            opacity=0.7,
+            opacity=0.6,
             hoverinfo="skip",
         ),
         row=2, col=1,
     )
 
-    # ── Row 3: Cumulative lift ────────────────────────────────────────────
+    # Row 3 — cumulative lift
     fig.add_trace(
         go.Scatter(
-            x=x_pct,
-            y=cum_lift,
+            x=x_pct, y=c_lift,
             mode="lines+markers",
             line=dict(color=COLOR_PREMIUM, width=2.2),
-            marker=dict(size=6),
+            marker=dict(size=6, color=COLOR_PREMIUM),
             name="Lift acumulado",
             hovertemplate="Top %{x:.1f}% → lift %{y:.2f}x<extra></extra>",
         ),
@@ -396,68 +780,59 @@ def render_lift_charts(lift_table: pd.DataFrame) -> None:
     )
     fig.add_trace(
         go.Scatter(
-            x=[0, 100],
-            y=[1, 1],
+            x=[0, 100], y=[1, 1],
             mode="lines",
-            line=dict(color=COLOR_RISK, dash="dash", width=1.5),
-            name="Aleatorio (lift)",
-            opacity=0.7,
+            line=dict(color=COLOR_RISK, dash="dash", width=1.2),
+            name="Aleatorio (lift=1)",
+            opacity=0.6,
             hoverinfo="skip",
         ),
         row=3, col=1,
     )
 
-    fig.update_yaxes(title_text="Premium reales", row=1, col=1)
-    fig.update_yaxes(title_text="% premium acumulado", row=2, col=1)
-    fig.update_xaxes(title_text="% de la base priorizada", row=3, col=1)
-    fig.update_yaxes(title_text="Lift", row=3, col=1)
+    for r in range(1, 4):
+        fig.update_xaxes(row=r, col=1, **_AX)
+        fig.update_yaxes(row=r, col=1, **_AX)
+    fig.update_xaxes(title_text="% de la base priorizada", row=3, col=1, titlefont=dict(size=10, color=COLOR_MUTED))
+    fig.update_yaxes(title_text="Premium reales", row=1, col=1, titlefont=dict(size=10, color=COLOR_MUTED))
+    fig.update_yaxes(title_text="% premium acumulado", row=2, col=1, titlefont=dict(size=10, color=COLOR_MUTED))
+    fig.update_yaxes(title_text="Lift", row=3, col=1, titlefont=dict(size=10, color=COLOR_MUTED))
+
+    # Style subplot titles
+    for ann in fig.layout.annotations:
+        ann.update(font=dict(size=11, color=COLOR_MUTED))
 
     fig.update_layout(
-        height=900,
+        height=880,
         showlegend=True,
-        legend=dict(orientation="h", yanchor="bottom", y=1.01, xanchor="right", x=1),
-        **_PLOTLY_LAYOUT,
+        legend=dict(
+            orientation="h", yanchor="bottom", y=1.01,
+            xanchor="right", x=1,
+            font=dict(size=10, color=COLOR_MUTED),
+            bgcolor="rgba(0,0,0,0)",
+        ),
+        **_PBG,
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 # ── App principal ────────────────────────────────────────────────────────────
 def main() -> None:
     st.set_page_config(
-        page_title="MVP Clientes Premium · Análisis",
+        page_title="Premium Intelligence · MVP",
         layout="wide",
         initial_sidebar_state="expanded",
     )
-    st.markdown(
-        """
-        <style>
-        .stMetric {
-            border: 1px solid rgba(91, 124, 153, 0.18);
-            border-radius: 14px;
-            padding: 0.35rem 0.6rem 0.5rem 0.6rem;
-            background: rgba(255,255,255,0.02);
-        }
-        .stTabs [data-baseweb="tab-list"] { gap: 0.5rem; }
-        .stTabs [data-baseweb="tab"] { border-bottom: 2px solid transparent; }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown(_CSS, unsafe_allow_html=True)
 
     # ── Cargar recursos base ─────────────────────────────────────────────────
     error_msg = None
     try:
-        pipeline = load_model()
-        metadata = load_metadata()
-        demo_df = load_demo_sample()
-        holdout_features_path = str(
-            PROJECT_ROOT / "data" / "processed" / "holdout_features_selected.parquet"
-        )
-        holdout_master_path = str(
-            PROJECT_ROOT / "data" / "processed" / "03_master_table_clean_holdout.parquet"
-        )
-        holdout_df = load_scoring_data(holdout_features_path)
-        holdout_master = load_master_table(holdout_master_path)
+        pipeline     = load_model()
+        metadata     = load_metadata()
+        demo_df      = load_demo_sample()
+        holdout_df   = load_scoring_data(str(PROJECT_ROOT / "data" / "processed" / "holdout_features_selected.parquet"))
+        holdout_master = load_master_table(str(PROJECT_ROOT / "data" / "processed" / "03_master_table_clean_holdout.parquet"))
     except FileNotFoundError as e:
         error_msg = f"Archivo no encontrado: {e}"
     except Exception as e:
@@ -471,10 +846,10 @@ def main() -> None:
 
     # ── Sidebar ──────────────────────────────────────────────────────────────
     with st.sidebar:
-        st.header("Selector de cliente")
+        st.markdown("### Selector de cliente")
 
         modo = st.radio(
-            "Modo de seleccion",
+            "Modo",
             ["Casos demo (4 ejemplos)", "Explorar dataset"],
             index=0,
         )
@@ -485,21 +860,21 @@ def main() -> None:
                 list(DATASET_CONFIGS.keys()),
                 index=0,
                 help=(
-                    "Holdout: ultimos 3 meses (validacion final del MVP). "
+                    "Holdout: últimos 3 meses (validación final del MVP). "
                     "Backtest: agosto 2018 (calidad del ranking con lift/gain)."
                 ),
             )
         else:
             dataset_mode = "Holdout (validacion final)"
 
-        active_config = DATASET_CONFIGS[dataset_mode]
+        active_config  = DATASET_CONFIGS[dataset_mode]
         active_metrics = active_config["metrics"]
 
         if modo == "Casos demo (4 ejemplos)":
-            df = holdout_df
+            df        = holdout_df
             master_df = holdout_master
-            opciones = {
-                f"{r['customer_unique_id'][:12]}... "
+            opciones  = {
+                f"{r['customer_unique_id'][:12]}… "
                 f"({'PREMIUM' if r['is_premium'] else 'REGULAR'})": r["customer_unique_id"]
                 for _, r in demo_df.iterrows()
             }
@@ -509,38 +884,22 @@ def main() -> None:
 
         else:
             try:
-                active_features_path = str(
-                    PROJECT_ROOT / "data" / "processed" / active_config["features_file"]
-                )
-                active_master_path = str(
-                    PROJECT_ROOT / "data" / "processed" / active_config["master_file"]
-                )
-                df = load_scoring_data(active_features_path)
-                master_df = load_master_table(active_master_path)
+                df        = load_scoring_data(str(PROJECT_ROOT / "data" / "processed" / active_config["features_file"]))
+                master_df = load_master_table(str(PROJECT_ROOT / "data" / "processed" / active_config["master_file"]))
             except FileNotFoundError as e:
                 st.error(f"Dataset no disponible: {e}")
                 st.stop()
 
             missing_cols = [c for c in selected_cols if c not in df.columns]
             if missing_cols:
-                st.error(f"Columnas faltantes en el dataset: {missing_cols}")
+                st.error(f"Columnas faltantes: {missing_cols}")
                 st.stop()
 
             selector_df = build_selector_frame(pipeline, df, selected_cols)
 
-            filtro = st.selectbox(
-                "Segmento a explorar",
-                ["Premium predichos", "Premium reales", "Todos"],
-            )
-            orden = st.selectbox(
-                "Orden",
-                ["Mayor score", "Menor score", "Indice original"],
-            )
-            search_text = st.text_input(
-                "Buscar por prefijo de customer_unique_id",
-                value="",
-                placeholder="Ej: 861eff47",
-            ).strip().lower()
+            filtro = st.selectbox("Segmento", ["Premium predichos", "Premium reales", "Todos"])
+            orden  = st.selectbox("Orden", ["Mayor score", "Menor score", "Índice original"])
+            search_text = st.text_input("Buscar prefijo ID", placeholder="Ej: 861eff47").strip().lower()
 
             filtered = selector_df.copy()
             if filtro == "Premium predichos":
@@ -548,10 +907,7 @@ def main() -> None:
             elif filtro == "Premium reales":
                 filtered = filtered[filtered["is_premium"] == 1]
             if search_text:
-                filtered = filtered[
-                    filtered["customer_unique_id"].str.lower().str.contains(search_text, na=False)
-                ]
-
+                filtered = filtered[filtered["customer_unique_id"].str.lower().str.contains(search_text, na=False)]
             if orden == "Mayor score":
                 filtered = filtered.sort_values("premium_probability", ascending=False)
             elif orden == "Menor score":
@@ -560,114 +916,62 @@ def main() -> None:
                 filtered = filtered.sort_values("row_idx", ascending=True)
 
             st.caption(f"Coincidencias: {len(filtered):,}")
-
             if filtered.empty:
-                st.warning("No hay clientes que coincidan con ese filtro.")
+                st.warning("Sin coincidencias.")
                 st.stop()
 
             max_options = min(len(filtered), 200)
-            visibles = st.slider(
-                "Candidatos visibles",
-                min_value=10,
-                max_value=max_options,
-                value=min(50, max_options),
-                step=10,
-            )
-            filtered = filtered.head(visibles)
+            visibles    = st.slider("Candidatos visibles", 10, max_options, min(50, max_options), 10)
+            filtered    = filtered.head(visibles)
 
             option_ids = filtered["customer_unique_id"].tolist()
             option_map = {
-                cid_opt: format_selector_option(
-                    filtered.loc[filtered["customer_unique_id"] == cid_opt].iloc[0]
-                )
+                cid_opt: format_selector_option(filtered.loc[filtered["customer_unique_id"] == cid_opt].iloc[0])
                 for cid_opt in option_ids
             }
-            selected_cid = st.selectbox(
-                "Cliente",
-                option_ids,
-                format_func=lambda cid_opt: option_map[cid_opt],
-            )
+            selected_cid = st.selectbox("Cliente", option_ids, format_func=lambda c: option_map[c])
 
-            with st.expander("Modo tecnico y analisis avanzado"):
-                advanced_filter = st.selectbox(
-                    "Explorar errores/aciertos del modelo",
-                    [
-                        "Sin cambiar seleccion actual",
-                        "Aciertos premium (TP)",
-                        "Falsos positivos (FP)",
-                        "Falsos negativos (FN)",
-                    ],
+            with st.expander("Modo técnico"):
+                adv_filter = st.selectbox(
+                    "Explorar errores/aciertos",
+                    ["Sin cambiar selección", "Aciertos premium (TP)", "Falsos positivos (FP)", "Falsos negativos (FN)"],
                 )
-                advanced_df = selector_df.copy()
-                if advanced_filter == "Aciertos premium (TP)":
-                    advanced_df = advanced_df[
-                        (advanced_df["is_premium"] == 1) & (advanced_df["is_pred_premium"])
-                    ]
-                elif advanced_filter == "Falsos positivos (FP)":
-                    advanced_df = advanced_df[
-                        (advanced_df["is_premium"] == 0) & (advanced_df["is_pred_premium"])
-                    ]
-                elif advanced_filter == "Falsos negativos (FN)":
-                    advanced_df = advanced_df[
-                        (advanced_df["is_premium"] == 1) & (~advanced_df["is_pred_premium"])
-                    ]
+                adv_df = selector_df.copy()
+                if adv_filter == "Aciertos premium (TP)":
+                    adv_df = adv_df[(adv_df["is_premium"] == 1) & adv_df["is_pred_premium"]]
+                elif adv_filter == "Falsos positivos (FP)":
+                    adv_df = adv_df[(adv_df["is_premium"] == 0) & adv_df["is_pred_premium"]]
+                elif adv_filter == "Falsos negativos (FN)":
+                    adv_df = adv_df[(adv_df["is_premium"] == 1) & ~adv_df["is_pred_premium"]]
 
-                if advanced_filter != "Sin cambiar seleccion actual":
-                    st.caption(f"Coincidencias tecnicas: {len(advanced_df):,}")
-                    advanced_df = advanced_df.sort_values(
-                        "premium_probability", ascending=False
-                    ).head(50)
-                    advanced_ids = advanced_df["customer_unique_id"].tolist()
-                    advanced_map = {
-                        cid_opt: format_selector_option(
-                            advanced_df.loc[
-                                advanced_df["customer_unique_id"] == cid_opt
-                            ].iloc[0]
-                        )
-                        for cid_opt in advanced_ids
-                    }
-                    selected_cid = st.selectbox(
-                        "Cliente tecnico",
-                        advanced_ids,
-                        format_func=lambda cid_opt: advanced_map[cid_opt],
-                    )
+                if adv_filter != "Sin cambiar selección":
+                    adv_df   = adv_df.sort_values("premium_probability", ascending=False).head(50)
+                    adv_ids  = adv_df["customer_unique_id"].tolist()
+                    adv_map  = {c: format_selector_option(adv_df.loc[adv_df["customer_unique_id"] == c].iloc[0]) for c in adv_ids}
+                    selected_cid = st.selectbox("Cliente técnico", adv_ids, format_func=lambda c: adv_map[c])
 
-                idx = st.number_input(
-                    "Indice de registro",
-                    min_value=0,
-                    max_value=len(df) - 1,
-                    value=int(filtered.iloc[0]["row_idx"]),
-                    step=1,
-                )
-                if st.button("Ir a indice"):
+                idx = st.number_input("Ir a índice", 0, len(df) - 1, int(filtered.iloc[0]["row_idx"]), 1)
+                if st.button("Ir"):
                     selected_cid = df.iloc[int(idx)]["customer_unique_id"]
 
             cid = selected_cid
             row = df[df["customer_unique_id"] == cid]
 
         st.divider()
-        st.markdown(f"**{dataset_mode}**")
-        st.metric("Total clientes", f"{active_metrics['n_total']:,}")
-        st.metric(
-            "Clientes premium reales",
-            f"{active_metrics['n_premium']:,} ({active_metrics['premium_rate']:.1%})",
-        )
-        st.metric("ROC-AUC", f"{active_metrics['roc_auc']:.4f}")
-        st.metric("Gini", f"{active_metrics['gini']:.4f}")
+        st.caption(dataset_mode.upper())
+        col_a, col_b = st.columns(2)
+        col_a.metric("Total", f"{active_metrics['n_total']:,}")
+        col_b.metric("Premium", f"{active_metrics['n_premium']:,}")
+        col_c, col_d = st.columns(2)
+        col_c.metric("ROC-AUC", f"{active_metrics['roc_auc']:.4f}")
+        col_d.metric("Gini", f"{active_metrics['gini']:.4f}")
 
-    # ── Validaciones ──────────────────────────────────────────────────────────
+    # ── Guards ───────────────────────────────────────────────────────────────
     if row.empty:
-        st.warning("No se encontro el cliente seleccionado.")
+        st.warning("No se encontró el cliente seleccionado.")
         st.stop()
 
     X = row[selected_cols]
-
-    st.title("Identificacion de Clientes Premium")
-    st.caption(
-        f"Modelo: `modelo_final.pkl` · Pipeline: LightGBM + ColumnTransformer · "
-        f"Umbral: {THRESHOLD:.0%} · Dataset activo: {active_config['label']}"
-    )
-
     try:
         prob = float(pipeline.predict_proba(X)[:, 1][0])
     except Exception as e:
@@ -677,213 +981,248 @@ def main() -> None:
     is_pred_premium = prob >= THRESHOLD
     is_true_premium = int(row["is_premium"].values[0]) if "is_premium" in row.columns else None
 
-    tab_scoring, tab_validacion, tab_eval = st.tabs(
-        ["Scoring Individual", "Validacion Sprint 3", active_config["tab_title"]]
+    # ── Header ───────────────────────────────────────────────────────────────
+    st.markdown(
+        f'<h1 style="font-family:var(--syne,Syne);font-size:1.5rem;font-weight:700;color:#dce6f0;margin-bottom:0.1rem;">'
+        f'Premium Intelligence</h1>'
+        f'<p style="font-family:\'Space Mono\',monospace;font-size:0.65rem;color:#7a8fa6;margin-bottom:1.2rem;">'
+        f'LightGBM · 28 features · umbral {THRESHOLD:.0%} · {active_config["label"]}</p>',
+        unsafe_allow_html=True,
     )
 
-    # ─── Tab 1: Scoring individual ─────────────────────────────────────────
+    tab_scoring, tab_validacion, tab_eval = st.tabs(
+        ["01 · Scoring Individual", "02 · Validación Sprint 3", f"03 · {active_config['tab_title']}"]
+    )
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # TAB 1 — Scoring individual
+    # ─────────────────────────────────────────────────────────────────────────
     with tab_scoring:
-        st.subheader("Resultado de la clasificacion")
 
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Clasificacion", "PREMIUM" if is_pred_premium else "NO PREMIUM")
-        col2.metric("Probabilidad de premium", f"{prob:.1%}")
-        if is_true_premium is not None:
-            real_label = "PREMIUM" if is_true_premium else "NO PREMIUM"
-            correcto = is_pred_premium == bool(is_true_premium)
-            col3.metric(
-                "Etiqueta real",
-                real_label,
-                delta="Correcto" if correcto else "Incorrecto",
+        # Hero score card
+        render_score_hero(prob, is_pred_premium, cid, is_true_premium)
+
+        # SHAP chart  |  Profile card
+        col_shap, col_profile = st.columns([3, 2], gap="medium")
+
+        with col_shap:
+            eyebrow("01", "EXPLICABILIDAD — ¿Por qué este score?")
+            st.caption(
+                "Top 5 variables que empujan hacia premium (verde) y hacia regular (rojo) "
+                "para este cliente específico."
             )
-        col4.metric("Umbral de decision", f"{THRESHOLD:.0%}")
+            try:
+                contrib = compute_contributions(pipeline, X)
+                render_contribution_chart(contrib, f"Contribuciones SHAP locales")
+            except Exception as e:
+                st.warning(f"No se pudieron calcular contribuciones: {e}")
 
-        st.progress(prob, text=f"Score de premium: {prob:.1%}")
-        st.divider()
+        with col_profile:
+            eyebrow("02", "PERFIL DEL CLIENTE")
+            info_row = master_df[master_df["customer_unique_id"] == cid]
+            render_profile_card(info_row, row)
 
-        info_row = master_df[master_df["customer_unique_id"] == cid]
-        if not info_row.empty:
-            st.subheader("Perfil del cliente")
-            info = info_row.iloc[0]
-            c1, c2, c3, c4, c5 = st.columns(5)
-            c1.metric("Gasto total (BRL)", safe_float_metric(info.get("total_spent", 0)))
-            c2.metric("Ordenes totales", safe_int(info.get("total_orders", 0), default="0"))
-            c3.metric("Ticket promedio (BRL)", safe_float_metric(info.get("avg_ticket", 0)))
-            c4.metric("Estado", str(info.get("customer_state", "N/A")))
-            recency = row["recency_days"].values[0] if "recency_days" in row.columns else None
-            c5.metric("Recencia (dias)", safe_int(recency))
-            st.divider()
-
-        st.subheader("Variables mas relevantes para este cliente")
-        st.caption(
-            "SHAP local del cliente seleccionado. Verde empuja hacia premium; rojo empuja hacia regular."
-        )
-        try:
-            contrib = compute_contributions(pipeline, X)
-            render_contribution_chart(contrib, f"Contribuciones al score — {cid[:20]}...")
-            with st.expander("Ver tabla de contribuciones completa"):
-                contrib_df = contrib.reset_index()
-                contrib_df.columns = ["Variable", "Contribucion"]
-                st.dataframe(contrib_df, width="stretch")
-        except Exception as e:
-            st.warning(f"No se pudieron calcular contribuciones locales: {e}")
-
-        with st.expander("Valores de las 28 variables del cliente"):
+        # Full feature table
+        eyebrow("03", "VARIABLES DEL MODELO")
+        with st.expander("Ver los 28 valores de entrada"):
             feature_display = X.T.rename(columns={X.index[0]: "Valor"}).astype(str)
             st.dataframe(feature_display, width="stretch")
 
-    # ─── Tab 2: Validacion metodologica Sprint 3 ──────────────────────────
+        with st.expander("Ver tabla de contribuciones completa"):
+            try:
+                contrib_df = contrib.reset_index()
+                contrib_df.columns = ["Variable", "Contribución"]
+                st.dataframe(contrib_df, width="stretch")
+            except NameError:
+                st.caption("Contribuciones no disponibles.")
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # TAB 2 — Validación metodológica Sprint 3
+    # ─────────────────────────────────────────────────────────────────────────
     with tab_validacion:
         s3 = SPRINT3_VALIDATION_METRICS
 
-        st.subheader("Referencia metodologica del modelo final")
-        st.caption(
-            "Estas metricas corresponden a la validacion temporal oficial del Sprint 3. "
-            "Son la referencia principal para juzgar generalizacion del modelo."
-        )
-        v1, v2, v3, v4, v5, v6 = st.columns(6)
-        v1.metric("ROC-AUC val", f"{s3['roc_auc']:.4f}")
-        v2.metric("Gini val", f"{s3['gini']:.4f}")
-        v3.metric("PR-AUC val", f"{s3['pr_auc']:.4f}")
-        v4.metric("Precision val", f"{s3['precision']:.2%}")
-        v5.metric("Recall val", f"{s3['recall']:.2%}")
-        v6.metric("F1 val", f"{s3['f1']:.4f}")
-
-        st.info(
-            "Interpretacion recomendada: Sprint 3 valida metodologicamente el clasificador "
-            "sobre un split temporal train/validacion. Sprint 4 complementa con integracion del "
-            "MVP, scoring sobre holdout/backtest, explicabilidad y ROI."
+        eyebrow("01", "REFERENCIA METODOLÓGICA")
+        st.markdown(
+            "**Validación temporal oficial del Sprint 3.** Train < julio 2018 · Validación ≥ julio 2018.",
+            unsafe_allow_html=False,
         )
 
+        m1, m2, m3 = st.columns(3)
+        m1.metric("ROC-AUC", f"{s3['roc_auc']:.4f}")
+        m2.metric("Gini",    f"{s3['gini']:.4f}")
+        m3.metric("PR-AUC",  f"{s3['pr_auc']:.4f}")
+        m4, m5, m6 = st.columns(3)
+        m4.metric("Precisión", f"{s3['precision']:.2%}")
+        m5.metric("Recall",    f"{s3['recall']:.2%}")
+        m6.metric("F1-Score",  f"{s3['f1']:.4f}")
+
+        eyebrow("02", "INTERPRETACIÓN")
+
+        narrative(
+            "¿Por qué estas métricas importan?",
+            "El Sprint 3 valida metodológicamente el clasificador sobre un split temporal riguroso. "
+            "Un ROC-AUC de 0.81 sobre un holdout temporal real es la evidencia principal de que "
+            "el modelo generaliza — no memoriza.",
+            color="green",
+        )
+        narrative(
+            "Relación Sprint 3 → Sprint 4",
+            "Sprint 4 no reemplaza ni contradice Sprint 3: lo complementa con integración operativa "
+            "(scoring sobre 96K clientes), explicabilidad SHAP y cuantificación de ROI. "
+            "El AUC más alto en holdout final se debe a que ese dataset tiene menos varianza temporal.",
+        )
+
+        eyebrow("03", "CONTEXTO DEL MODELO")
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown("**Escenario Sprint 3**")
-            st.write("- Split temporal de desarrollo y validacion.")
-            st.write("- Base para comparar modelos y elegir LightGBM final.")
-            st.write("- Umbral operativo adoptado: 0.55.")
+            st.markdown("**Escenario de entrenamiento**")
+            st.write("- Split temporal · no aleatorio")
+            st.write("- LightGBM seleccionado entre 5 candidatos")
+            st.write("- Umbral operativo calibrado a 0.55 sobre validación")
         with c2:
-            st.markdown("**Por que importa**")
-            st.write("- Evita leer el holdout/backtest como mejora milagrosa.")
-            st.write("- Separa validez metodologica de demostracion operativa.")
-            st.write("- Da contexto a la metrica alta de la evaluacion final.")
+            st.markdown("**Por qué importa la separación**")
+            st.write("- Evita leer holdout como 'mejora milagrosa'")
+            st.write("- Separa validez metodológica de demostración operativa")
+            st.write("- Permite juzgar generalización temporal real")
 
-    # ─── Tab 3: Evaluacion operativa (holdout o backtest) ─────────────────
+    # ─────────────────────────────────────────────────────────────────────────
+    # TAB 3 — Evaluación operativa (Holdout / Backtest)
+    # ─────────────────────────────────────────────────────────────────────────
     with tab_eval:
-        m = active_metrics
-        cm = get_confusion_counts(m)
-        is_backtest = active_config["has_lift"]
+        m            = active_metrics
+        cm           = get_confusion_counts(m)
+        is_backtest  = active_config["has_lift"]
         section_label = "backtest (agosto 2018)" if is_backtest else "holdout_3m"
 
-        st.subheader(f"Desempeno operativo — {section_label}")
+        # ── 01 — Desempeño del modelo ────────────────────────────────────────
+        eyebrow("01", "DESEMPEÑO DEL MODELO")
         st.caption(
-            f"Metricas precalculadas sobre el {section_label} con umbral {THRESHOLD:.0%}. "
-            "Complementan la validacion de Sprint 3 con integracion operativa del MVP."
+            f"Métricas precalculadas sobre {section_label} · umbral {THRESHOLD:.0%}"
         )
+
         mc1, mc2, mc3, mc4, mc5 = st.columns(5)
-        mc1.metric("ROC-AUC", f"{m['roc_auc']:.4f}")
-        mc2.metric("Gini", f"{m['gini']:.4f}")
-        mc3.metric("Precision", f"{m['precision']:.2%}")
-        mc4.metric("Recall", f"{m['recall']:.2%}")
-        mc5.metric("F1-Score", f"{m['f1']:.2%}")
+        mc1.metric("ROC-AUC",   f"{m['roc_auc']:.4f}")
+        mc2.metric("Gini",      f"{m['gini']:.4f}")
+        mc3.metric("Precisión", f"{m['precision']:.2%}")
+        mc4.metric("Recall",    f"{m['recall']:.2%}")
+        mc5.metric("F1-Score",  f"{m['f1']:.2%}")
 
-        st.divider()
-        st.subheader("Conteos de clasificacion")
-        cc_tp, cc_fp, cc_fn, cc_tn = st.columns(4)
-        cc_tp.metric("TP", f"{cm['tp']:,}", delta="Premium reales detectados")
-        cc_fp.metric("FP", f"{cm['fp']:,}", delta="Contactos sin premium real", delta_color="inverse")
-        cc_fn.metric("FN", f"{cm['fn']:,}", delta="Premium reales omitidos", delta_color="inverse")
-        cc_tn.metric("TN", f"{cm['tn']:,}", delta="No premium correctamente descartados")
-
-        st.divider()
-        st.subheader("Distribucion de facturacion capturada")
-        fc1, fc2, fc3 = st.columns(3)
-        fc1.metric("Facturacion total", f"BRL {m['total_spend']:,.2f}")
-        fc2.metric(
-            "Facturacion segmento premium real",
-            f"BRL {m['premium_spend']:,.2f}",
-            delta=f"{m['premium_spend_pct']:.1%} del total",
-        )
-        fc3.metric(
-            "Gasto premium detectado (TP)",
-            f"BRL {m['tp_spend']:,.2f}",
-            delta=f"{m['tp_spend'] / m['premium_spend']:.1%} del gasto premium",
+        narrative(
+            f"Interpretación sobre {section_label}",
+            f"Con umbral 0.55, el modelo clasifica {m['n_pred_premium']:,} clientes como premium. "
+            f"De esos, {m['tp_count']:,} son premium reales (precisión {m['precision']:.0%}). "
+            f"Se pierden {m['n_premium'] - m['tp_count']:,} premium reales no detectados (FN).",
         )
 
+        # ── 02 — Análisis de clasificación ──────────────────────────────────
+        eyebrow("02", "ANÁLISIS DE CLASIFICACIÓN")
+
+        count_cols = st.columns(4)
+        count_cols[0].metric("TP — Detectados correctos", f"{cm['tp']:,}",   delta="Premium reales avisados")
+        count_cols[1].metric("FP — Falsos positivos",     f"{cm['fp']:,}",   delta="Costo adicional", delta_color="inverse")
+        count_cols[2].metric("FN — Perdidos",             f"{cm['fn']:,}",   delta="Premium no detectados", delta_color="inverse")
+        count_cols[3].metric("TN — Descartados OK",       f"{cm['tn']:,}")
+
+        st.divider()
+        col_cm, col_cm_note = st.columns([3, 2], gap="medium")
+        with col_cm:
+            render_confusion_matrix(cm, section_label)
+        with col_cm_note:
+            st.markdown("")
+            st.markdown("")
+            narrative(
+                "Cómo leer la matriz",
+                "Filas: etiqueta real · Columnas: predicción del modelo. "
+                "La celda superior-izquierda (TN) domina porque el 98.7% de los "
+                "clientes son no-premium. Los FP tienen costo de campaña; los FN "
+                "son la oportunidad perdida.",
+                color="green",
+            )
+            st.markdown("")
+            fc1, fc2 = st.columns(2)
+            fc1.metric(
+                "% premium capturado",
+                f"{cm['tp'] / m['n_premium']:.1%}",
+                delta=f"{cm['tp']:,} de {m['n_premium']:,}",
+            )
+            fc2.metric(
+                "Precisión efectiva",
+                f"{m['precision']:.1%}",
+                delta=f"{m['n_pred_premium']:,} clasificados premium",
+            )
+
+        # ── 03 — Impacto de negocio ──────────────────────────────────────────
+        eyebrow("03", "IMPACTO DE NEGOCIO")
+
+        st.markdown(
+            '<div class="roi-compare">'
+            f'<div class="roi-block bad">'
+            f'  <span class="roi-block-lbl">Campaña masiva · {m["n_total"]:,} clientes</span>'
+            f'  <span class="roi-block-val bad">{m["roi_masiva"]:.2f}%</span>'
+            f'  <span class="roi-block-sub">ROI &nbsp;·&nbsp; contactar a todos</span>'
+            f'</div>'
+            f'<div class="roi-block good">'
+            f'  <span class="roi-block-lbl">Campaña optimizada · {m["n_pred_premium"]:,} clientes</span>'
+            f'  <span class="roi-block-val good">+{m["roi_modelo"]:.2f}%</span>'
+            f'  <span class="roi-block-sub">ROI &nbsp;·&nbsp; sólo predichos premium</span>'
+            f'</div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+
+        col_roi, col_roi_stats = st.columns([3, 2], gap="medium")
+        with col_roi:
+            render_roi_bars(m)
+            st.caption("Supuesto: costo BRL 15/cliente · retorno BRL 120/premium convertido.")
+        with col_roi_stats:
+            st.markdown("")
+            st.markdown("")
+            r1, r2 = st.columns(2)
+            r1.metric("Gasto total",       f"BRL {m['total_spend']:,.0f}")
+            r2.metric("Gasto en premium",  f"BRL {m['premium_spend']:,.0f}", delta=f"{m['premium_spend_pct']:.1%} del total")
+            r3, r4 = st.columns(2)
+            r3.metric("TP spend capturado", f"BRL {m['tp_spend']:,.0f}", delta=f"{m['tp_spend']/m['premium_spend']:.1%} del gasto premium")
+            r4.metric("Ahorro estimado",    f"BRL {m['cost_savings']:,.0f}", delta=f"reducción {1 - m['n_pred_premium']/m['n_total']:.1%}")
+
+        # ── 04 — Lift y ranking (backtest only) ─────────────────────────────
         if is_backtest:
-            st.divider()
-            st.subheader("Lift y gains del ranking")
+            eyebrow("04", "CALIDAD DEL RANKING")
+
             lift_table = build_lift_table(pipeline, df, selected_cols)
             top10 = lift_table.iloc[0]
+
             lg1, lg2, lg3 = st.columns(3)
-            lg1.metric("Top 10% captura", f"{top10['cum_events_pct']:.1%}", delta="de premium reales")
-            lg2.metric(
-                "Tasa premium en decil 1",
-                f"{top10['premium_rate_pct']:.2f}%",
-                delta="vs base 1.30%",
-            )
-            lg3.metric("Lift primer decil", f"{top10['lift']:.2f}x", delta="vs seleccion aleatoria")
+            lg1.metric("Top 10% captura",      f"{top10['cum_events_pct']:.1%}", delta="de todos los premium reales")
+            lg2.metric("Tasa premium decil 1",  f"{top10['premium_rate_pct']:.1f}%", delta="vs base 1.3%")
+            lg3.metric("Lift acumulado decil 1", f"{top10['lift']:.2f}x", delta="vs selección aleatoria")
 
-            st.caption(
-                "Ordenamos el backtest por score descendente, lo partimos en 10 grupos iguales y medimos "
-                "cuantos premium reales captura cada tramo del ranking."
-            )
-            st.info(
-                "Lectura correcta: el primer decil no es 100% premium. Su tasa premium es ~13%, "
-                "pero concentra la mayoria de los premium reales. Por eso el gain acumulado "
-                "salta rapidamente en el primer 10% de la base."
+            narrative(
+                "Lectura correcta del primer decil",
+                f"El primer decil no es 100% premium — su tasa es ~{top10['premium_rate_pct']:.0f}%. "
+                "Pero concentra la mayoría de los premium reales: "
+                f"captura {top10['cum_events_pct']:.0%} de todos ellos seleccionando sólo el 10% de la base. "
+                "Eso es el lift en acción.",
+                color="green",
             )
 
-            gl_col1, gl_col2 = st.columns(2)
-            with gl_col1:
-                st.markdown("**Tabla de deciles**")
+            gl_table, gl_charts = st.columns([2, 3], gap="medium")
+            with gl_table:
+                eyebrow("", "TABLA DE DECILES")
                 display_table = lift_table[
                     ["decile", "cases", "responses", "premium_rate_pct",
                      "cum_responses", "gain_pct", "lift", "cum_lift"]
                 ].copy()
-                display_table["premium_rate_pct"] = display_table["premium_rate_pct"].map(lambda x: f"{x:.2f}%")
-                display_table["gain_pct"] = display_table["gain_pct"].map(lambda x: f"{x:.2f}%")
-                display_table["lift"] = display_table["lift"].map(lambda x: f"{x:.2f}")
-                display_table["cum_lift"] = display_table["cum_lift"].map(lambda x: f"{x:.2f}")
+                display_table.columns = ["Decil", "Casos", "Premium", "Tasa %", "Cum.Premium", "Gain %", "Lift", "Lift Cum."]
+                for col in ["Tasa %", "Gain %"]:
+                    display_table[col] = display_table[col].map(lambda x: f"{x:.2f}%")
+                for col in ["Lift", "Lift Cum."]:
+                    display_table[col] = display_table[col].map(lambda x: f"{x:.2f}")
                 st.dataframe(display_table, width="stretch", hide_index=True)
 
-            with gl_col2:
-                st.markdown("**Curvas interactivas gain / lift**")
+            with gl_charts:
+                eyebrow("", "CURVAS INTERACTIVAS")
                 render_lift_charts(lift_table)
-
-        st.divider()
-        st.subheader("Matriz de confusion y ROI")
-        st.caption(
-            "La matriz resume aciertos/errores del clasificador; el ROI muestra el valor "
-            "de usar el score para focalizar la campana."
-        )
-
-        cc1, cc2, cc3 = st.columns(3)
-        cc1.metric(
-            "ROI Campana Masiva (all)",
-            f"{m['roi_masiva']:.2f}%",
-            delta=f"{m['n_total']:,} clientes contactados",
-            delta_color="inverse",
-        )
-        cc2.metric(
-            "ROI Campana Optimizada (modelo)",
-            f"{m['roi_modelo']:.2f}%",
-            delta=f"{m['n_pred_premium']:,} clientes contactados",
-        )
-        cc3.metric(
-            "Ahorro en costo de marketing",
-            f"BRL {m['cost_savings']:,.2f}",
-            delta=f"Reduccion del {1 - m['n_pred_premium'] / m['n_total']:.1%}",
-        )
-
-        col_cm, col_roi = st.columns(2)
-        with col_cm:
-            st.markdown("**Matriz de confusion**")
-            st.caption("Filas: etiqueta real. Columnas: prediccion del modelo.")
-            render_confusion_matrix(cm, section_label)
-
-        with col_roi:
-            st.markdown("**Comparativa de ROI**")
-            render_roi_bars(m)
 
 
 if __name__ == "__main__":
