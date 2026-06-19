@@ -15,7 +15,8 @@ RUN pip install --no-cache-dir \
     "scikit-learn>=1.4.0" \
     "lightgbm>=4.3.0" \
     "streamlit>=1.35.0" \
-    "matplotlib>=3.8.0"
+    "matplotlib>=3.8.0" \
+    "plotly>=5.20.0"
 
 # Copiar la app
 COPY app/ app/
@@ -25,15 +26,17 @@ COPY models/final/modelo_final.pkl models/final/modelo_final.pkl
 
 # Copiar los artefactos de datos requeridos por el dashboard
 COPY data/processed/holdout_features_selected.parquet data/processed/holdout_features_selected.parquet
+COPY data/processed/backtest_features_selected.parquet data/processed/backtest_features_selected.parquet
 COPY data/processed/06_features_selected_metadata.json data/processed/06_features_selected_metadata.json
 COPY data/processed/03_master_table_clean_holdout.parquet data/processed/03_master_table_clean_holdout.parquet
+COPY data/processed/03_master_table_clean_backtest.parquet data/processed/03_master_table_clean_backtest.parquet
 COPY data/processed/demo_sample_scoring.parquet data/processed/demo_sample_scoring.parquet
 
 ENV PYTHONPATH=/app
 
 EXPOSE 8501
 
-CMD ["streamlit", "run", "app/dashboard/app.py", \
+CMD ["streamlit", "run", "app/dashboard/app_alt.py", \
      "--server.port=8501", \
      "--server.address=0.0.0.0", \
      "--server.headless=true", \
