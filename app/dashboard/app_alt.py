@@ -5,9 +5,10 @@ import pickle
 import warnings
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
+from plotly.subplots import make_subplots
 
 warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
 
@@ -33,7 +34,6 @@ COLOR_PREMIUM = "#39a96b"
 COLOR_RISK = "#d95d39"
 COLOR_NEUTRAL = "#5b7c99"
 COLOR_TEXT = "#213547"
-CMAP_CONFUSION = "GnBu"
 
 # Metricas pre-computadas holdout_3m (umbral 0.55)
 HOLDOUT_METRICS = {
@@ -106,6 +106,13 @@ DATASET_CONFIGS: dict[str, dict] = {
     },
 }
 
+_PLOTLY_LAYOUT = dict(
+    plot_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="rgba(0,0,0,0)",
+    font=dict(color=COLOR_TEXT),
+    margin=dict(l=10, r=10, t=40, b=10),
+)
+
 
 # ── Cache de recursos ───────────────────────────────────────────────────────
 @st.cache_resource
@@ -144,9 +151,7 @@ def compute_contributions(pipeline, X_row: pd.DataFrame) -> pd.Series:
     feature_names = preprocessor.get_feature_names_out()
     X_proc_df = pd.DataFrame(X_proc, columns=feature_names, index=X_row.index)
     contribs = lgb_model.predict(X_proc_df, pred_contrib=True)
-    clean_names = [
-        n.replace("num__", "").replace("cat__", "") for n in feature_names
-    ]
+    clean_names = [n.replace("num__", "").replace("cat__", "") for n in feature_names]
     return pd.Series(contribs[0, :-1], index=clean_names).sort_values(ascending=False)
 
 
@@ -155,16 +160,24 @@ def render_contribution_chart(contrib: pd.Series, title: str) -> None:
     bot5 = contrib.tail(5)
     combined = pd.concat([top5, bot5.iloc[::-1]])
 
-    fig, ax = plt.subplots(figsize=(10, 4))
     colors = [COLOR_PREMIUM if v >= 0 else COLOR_RISK for v in combined]
-    ax.barh(combined.index, combined.values, color=colors, edgecolor="white")
-    ax.axvline(0, color=COLOR_NEUTRAL, linewidth=0.8)
-    ax.set_xlabel("Contribucion al score (log-odds)")
-    ax.set_title(title)
-    ax.invert_yaxis()
-    plt.tight_layout()
-    st.pyplot(fig)
-    plt.close(fig)
+
+    fig = go.Figure(go.Bar(
+        x=combined.values,
+        y=combined.index,
+        orientation="h",
+        marker_color=colors,
+        hovertemplate="<b>%{y}</b><br>Contribucion: %{x:.4f}<extra></extra>",
+    ))
+    fig.add_vline(x=0, line_color=COLOR_NEUTRAL, line_width=1)
+    fig.update_layout(
+        title=dict(text=title, font=dict(size=13)),
+        xaxis_title="Contribucion al score (log-odds)",
+        yaxis=dict(autorange="reversed"),
+        height=350,
+        **_PLOTLY_LAYOUT,
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def safe_int(value, default: str = "N/A"):
@@ -252,10 +265,166 @@ def build_lift_table(_pipeline, df: pd.DataFrame, selected_cols: list[str]) -> p
     return lift_table
 
 
+def render_confusion_matrix(cm: dict[str, int], title: str) -> None:
+    cm_matrix = [[cm["tn"], cm["fp"]], [cm["fn"], cm["tp"]]]
+    x_labels = ["Pred: NO PREMIUM", "Pred: PREMIUM"]
+    y_labels = ["Real: NO PREMIUM", "Real: PREMIUM"]
+
+    fig = go.Figure(go.Heatmap(
+        z=cm_matrix,
+        x=x_labels,
+        y=y_labels,
+        colorscale="GnBu",
+        showscale=True,
+        hovertemplate="%{y} → %{x}<br>Conteo: %{z:,}<extra></extra>",
+    ))
+
+    max_cell = max(cm_matrix[0] + cm_matrix[1])
+    for i in range(2):
+        for j in range(2):
+            val = cm_matrix[i][j]
+            text_color = "white" if val >= max_cell * 0.65 else COLOR_TEXT
+            fig.add_annotation(
+                x=x_labels[j],
+                y=y_labels[i],
+                text=f"<b>{val:,}</b>",
+                showarrow=False,
+                font=dict(size=15, color=text_color),
+            )
+
+    fig.update_layout(
+        title=dict(text=title, font=dict(size=13)),
+        height=320,
+        **_PLOTLY_LAYOUT,
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def render_roi_bars(m: dict) -> None:
+    labels = ["Campana Masiva<br>(Target All)", "Campana Optimizada<br>(Modelo, umbral 0.55)"]
+    rois = [m["roi_masiva"], m["roi_modelo"]]
+    colors = [COLOR_RISK, COLOR_PREMIUM]
+    subtexts = [
+        f"{m['n_total']:,} clientes",
+        f"{m['n_pred_premium']:,} clientes",
+    ]
+
+    fig = go.Figure(go.Bar(
+        x=labels,
+        y=rois,
+        marker_color=colors,
+        text=[f"<b>{v:.2f}%</b>" for v in rois],
+        textposition="outside",
+        customdata=subtexts,
+        hovertemplate="<b>%{x}</b><br>ROI: %{y:.2f}%<br>%{customdata}<extra></extra>",
+        width=0.45,
+    ))
+    fig.add_hline(y=0, line_color=COLOR_NEUTRAL, line_width=1)
+    fig.update_layout(
+        title=dict(text="Retorno por estrategia", font=dict(size=13)),
+        yaxis_title="ROI (%)",
+        height=350,
+        **_PLOTLY_LAYOUT,
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    st.caption("Supuesto: costo BRL 15 por cliente · retorno BRL 120 por premium convertido.")
+
+
+def render_lift_charts(lift_table: pd.DataFrame) -> None:
+    x_pct = lift_table["cum_cases_pct"] * 100
+    gains = lift_table["cum_events_pct"] * 100
+    cum_lift = lift_table["cum_lift"]
+
+    fig = make_subplots(
+        rows=3,
+        cols=1,
+        shared_xaxes=False,
+        subplot_titles=["Responses por decil", "Cumulative gains", "Cumulative lift"],
+        vertical_spacing=0.1,
+    )
+
+    # ── Row 1: Responses por decil ────────────────────────────────────────
+    fig.add_trace(
+        go.Bar(
+            x=lift_table["decile"].astype(str),
+            y=lift_table["responses"],
+            marker_color=COLOR_NEUTRAL,
+            name="Premium reales",
+            hovertemplate="Decil %{x}: <b>%{y}</b> premium reales<extra></extra>",
+        ),
+        row=1, col=1,
+    )
+
+    # ── Row 2: Cumulative gains ───────────────────────────────────────────
+    fig.add_trace(
+        go.Scatter(
+            x=x_pct,
+            y=gains,
+            mode="lines+markers",
+            line=dict(color="#1565C0", width=2.2),
+            marker=dict(size=6),
+            name="Modelo",
+            hovertemplate="Top %{x:.1f}% → captura %{y:.1f}% premium<extra></extra>",
+        ),
+        row=2, col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=[0, 100],
+            y=[0, 100],
+            mode="lines",
+            line=dict(color=COLOR_RISK, dash="dash", width=1.5),
+            name="Aleatorio",
+            opacity=0.7,
+            hoverinfo="skip",
+        ),
+        row=2, col=1,
+    )
+
+    # ── Row 3: Cumulative lift ────────────────────────────────────────────
+    fig.add_trace(
+        go.Scatter(
+            x=x_pct,
+            y=cum_lift,
+            mode="lines+markers",
+            line=dict(color=COLOR_PREMIUM, width=2.2),
+            marker=dict(size=6),
+            name="Lift acumulado",
+            hovertemplate="Top %{x:.1f}% → lift %{y:.2f}x<extra></extra>",
+        ),
+        row=3, col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=[0, 100],
+            y=[1, 1],
+            mode="lines",
+            line=dict(color=COLOR_RISK, dash="dash", width=1.5),
+            name="Aleatorio (lift)",
+            opacity=0.7,
+            hoverinfo="skip",
+        ),
+        row=3, col=1,
+    )
+
+    fig.update_yaxes(title_text="Premium reales", row=1, col=1)
+    fig.update_yaxes(title_text="% premium acumulado", row=2, col=1)
+    fig.update_xaxes(title_text="% de la base priorizada", row=3, col=1)
+    fig.update_yaxes(title_text="Lift", row=3, col=1)
+
+    fig.update_layout(
+        height=900,
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=1.01, xanchor="right", x=1),
+        **_PLOTLY_LAYOUT,
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+
 # ── App principal ────────────────────────────────────────────────────────────
 def main() -> None:
     st.set_page_config(
-        page_title="MVP Clientes Premium",
+        page_title="MVP Clientes Premium · Análisis",
         layout="wide",
         initial_sidebar_state="expanded",
     )
@@ -275,7 +444,7 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    # ── Cargar recursos base (siempre necesarios) ────────────────────────────
+    # ── Cargar recursos base ─────────────────────────────────────────────────
     error_msg = None
     try:
         pipeline = load_model()
@@ -287,7 +456,6 @@ def main() -> None:
         holdout_master_path = str(
             PROJECT_ROOT / "data" / "processed" / "03_master_table_clean_holdout.parquet"
         )
-        # Holdout siempre cargado — lo usan los casos demo y es el dataset por defecto
         holdout_df = load_scoring_data(holdout_features_path)
         holdout_master = load_master_table(holdout_master_path)
     except FileNotFoundError as e:
@@ -322,13 +490,11 @@ def main() -> None:
                 ),
             )
         else:
-            # Demo siempre muestra stats del holdout (los 4 ejemplos vienen de ahi)
             dataset_mode = "Holdout (validacion final)"
 
         active_config = DATASET_CONFIGS[dataset_mode]
         active_metrics = active_config["metrics"]
 
-        # ── Selector de cliente ───────────────────────────────────────────
         if modo == "Casos demo (4 ejemplos)":
             df = holdout_df
             master_df = holdout_master
@@ -342,7 +508,6 @@ def main() -> None:
             row = df[df["customer_unique_id"] == cid]
 
         else:
-            # Cargar dataset seleccionado (holdout o backtest)
             try:
                 active_features_path = str(
                     PROJECT_ROOT / "data" / "processed" / active_config["features_file"]
@@ -480,7 +645,6 @@ def main() -> None:
             cid = selected_cid
             row = df[df["customer_unique_id"] == cid]
 
-        # ── Stats del dataset activo ──────────────────────────────────────
         st.divider()
         st.markdown(f"**{dataset_mode}**")
         st.metric("Total clientes", f"{active_metrics['n_total']:,}")
@@ -491,21 +655,19 @@ def main() -> None:
         st.metric("ROC-AUC", f"{active_metrics['roc_auc']:.4f}")
         st.metric("Gini", f"{active_metrics['gini']:.4f}")
 
-    # ── Validaciones post-sidebar ─────────────────────────────────────────────
+    # ── Validaciones ──────────────────────────────────────────────────────────
     if row.empty:
         st.warning("No se encontro el cliente seleccionado.")
         st.stop()
 
     X = row[selected_cols]
 
-    # ── Titulo y caption ──────────────────────────────────────────────────────
     st.title("Identificacion de Clientes Premium")
     st.caption(
         f"Modelo: `modelo_final.pkl` · Pipeline: LightGBM + ColumnTransformer · "
         f"Umbral: {THRESHOLD:.0%} · Dataset activo: {active_config['label']}"
     )
 
-    # ── Prediccion ────────────────────────────────────────────────────────────
     try:
         prob = float(pipeline.predict_proba(X)[:, 1][0])
     except Exception as e:
@@ -515,7 +677,6 @@ def main() -> None:
     is_pred_premium = prob >= THRESHOLD
     is_true_premium = int(row["is_premium"].values[0]) if "is_premium" in row.columns else None
 
-    # ── Tabs ─────────────────────────────────────────────────────────────────
     tab_scoring, tab_validacion, tab_eval = st.tabs(
         ["Scoring Individual", "Validacion Sprint 3", active_config["tab_title"]]
     )
@@ -648,7 +809,6 @@ def main() -> None:
             delta=f"{m['tp_spend'] / m['premium_spend']:.1%} del gasto premium",
         )
 
-        # Lift/gain solo disponible en modo Backtest (computado sobre df activo)
         if is_backtest:
             st.divider()
             st.subheader("Lift y gains del ranking")
@@ -677,65 +837,18 @@ def main() -> None:
             with gl_col1:
                 st.markdown("**Tabla de deciles**")
                 display_table = lift_table[
-                    [
-                        "decile",
-                        "cases",
-                        "responses",
-                        "premium_rate_pct",
-                        "cum_responses",
-                        "gain_pct",
-                        "lift",
-                        "cum_lift",
-                    ]
+                    ["decile", "cases", "responses", "premium_rate_pct",
+                     "cum_responses", "gain_pct", "lift", "cum_lift"]
                 ].copy()
-                display_table["premium_rate_pct"] = display_table["premium_rate_pct"].map(
-                    lambda x: f"{x:.2f}%"
-                )
+                display_table["premium_rate_pct"] = display_table["premium_rate_pct"].map(lambda x: f"{x:.2f}%")
                 display_table["gain_pct"] = display_table["gain_pct"].map(lambda x: f"{x:.2f}%")
                 display_table["lift"] = display_table["lift"].map(lambda x: f"{x:.2f}")
                 display_table["cum_lift"] = display_table["cum_lift"].map(lambda x: f"{x:.2f}")
                 st.dataframe(display_table, width="stretch", hide_index=True)
 
             with gl_col2:
-                st.markdown("**Responses por decil y curvas gain / lift**")
-                fig_gl, axes_gl = plt.subplots(3, 1, figsize=(6.2, 9.8), sharex=False)
-                axes_gl[0].bar(
-                    lift_table["decile"].astype(str),
-                    lift_table["responses"],
-                    color=COLOR_NEUTRAL,
-                    edgecolor="white",
-                )
-                axes_gl[0].set_ylabel("Premium reales")
-                axes_gl[0].set_title("Responses por decil")
-                axes_gl[0].grid(axis="y", alpha=0.25, linestyle=":")
-
-                x = lift_table["cum_cases_pct"] * 100
-                gains = lift_table["cum_events_pct"] * 100
-                cum_lift = lift_table["cum_lift"]
-
-                axes_gl[1].plot(x, gains, marker="o", linewidth=2.2, color="#1565C0", label="Modelo")
-                axes_gl[1].plot(
-                    [0, 100], [0, 100], linestyle="--", color=COLOR_RISK, alpha=0.7, label="Aleatorio"
-                )
-                axes_gl[1].set_ylabel("% premium acumulado")
-                axes_gl[1].set_title("Cumulative gains")
-                axes_gl[1].legend()
-                axes_gl[1].grid(alpha=0.25, linestyle=":")
-
-                axes_gl[2].plot(
-                    x, cum_lift, marker="o", linewidth=2.2, color=COLOR_PREMIUM, label="Lift acumulado"
-                )
-                axes_gl[2].plot(
-                    [0, 100], [1, 1], linestyle="--", color=COLOR_RISK, alpha=0.7, label="Aleatorio"
-                )
-                axes_gl[2].set_xlabel("% de la base priorizada")
-                axes_gl[2].set_ylabel("Lift")
-                axes_gl[2].set_title("Cumulative lift")
-                axes_gl[2].legend()
-                axes_gl[2].grid(alpha=0.25, linestyle=":")
-                plt.tight_layout()
-                st.pyplot(fig_gl)
-                plt.close(fig_gl)
+                st.markdown("**Curvas interactivas gain / lift**")
+                render_lift_charts(lift_table)
 
         st.divider()
         st.subheader("Matriz de confusion y ROI")
@@ -763,59 +876,14 @@ def main() -> None:
         )
 
         col_cm, col_roi = st.columns(2)
-
         with col_cm:
             st.markdown("**Matriz de confusion**")
             st.caption("Filas: etiqueta real. Columnas: prediccion del modelo.")
-            fig_cm, ax_cm = plt.subplots(figsize=(5.0, 4.0))
-            cm_matrix = [[cm["tn"], cm["fp"]], [cm["fn"], cm["tp"]]]
-            im = ax_cm.imshow(cm_matrix, cmap=CMAP_CONFUSION)
-            ax_cm.set_xticks([0, 1], labels=["Pred: NO PREMIUM", "Pred: PREMIUM"])
-            ax_cm.set_yticks([0, 1], labels=["Real: NO PREMIUM", "Real: PREMIUM"])
-            ax_cm.set_title(section_label)
-            max_cell = max(cm_matrix[0] + cm_matrix[1])
-            for i in range(2):
-                for j in range(2):
-                    ax_cm.text(
-                        j,
-                        i,
-                        f"{cm_matrix[i][j]:,}",
-                        ha="center",
-                        va="center",
-                        color=COLOR_TEXT if cm_matrix[i][j] < max_cell * 0.65 else "white",
-                        fontweight="bold",
-                    )
-            fig_cm.colorbar(im, ax=ax_cm, fraction=0.046, pad=0.04)
-            plt.tight_layout()
-            st.pyplot(fig_cm)
-            plt.close(fig_cm)
+            render_confusion_matrix(cm, section_label)
 
         with col_roi:
             st.markdown("**Comparativa de ROI**")
-            st.caption("Supuesto: costo BRL 15 por cliente | retorno BRL 120 por premium convertido.")
-            fig2, ax2 = plt.subplots(figsize=(6.0, 4.0))
-            roi_labels = [
-                "Campana Masiva\n(Target All)",
-                "Campana Optimizada\n(Modelo, umbral 0.55)",
-            ]
-            rois = [m["roi_masiva"], m["roi_modelo"]]
-            roi_colors = [COLOR_RISK, COLOR_PREMIUM]
-            bars = ax2.bar(roi_labels, rois, color=roi_colors, edgecolor="white", width=0.45)
-            ax2.axhline(0, color=COLOR_NEUTRAL, linewidth=0.8)
-            ax2.set_ylabel("ROI (%)")
-            ax2.set_title("Retorno por estrategia")
-            for bar, val in zip(bars, rois):
-                ypos = val + 5 if val >= 0 else val - 12
-                ax2.text(
-                    bar.get_x() + bar.get_width() / 2,
-                    ypos,
-                    f"{val:.2f}%",
-                    ha="center",
-                    fontweight="bold",
-                )
-            plt.tight_layout()
-            st.pyplot(fig2)
-            plt.close(fig2)
+            render_roi_bars(m)
 
 
 if __name__ == "__main__":
