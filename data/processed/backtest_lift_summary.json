@@ -1,0 +1,11 @@
+{
+  "n_total": 96096,
+  "n_events": 1253,
+  "base_rate": 0.01303904428904429,
+  "top_10_capture_pct": 1.0,
+  "top_20_capture_pct": 1.0,
+  "top_10_premium_rate_pct": 13.039858466021439,
+  "decile_1_lift": 10.000624414611302,
+  "cum_lift_top_10": 10.000624414611302,
+  "cum_lift_top_20": 5.000052031843488
+}

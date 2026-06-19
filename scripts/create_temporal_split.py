@@ -10,9 +10,11 @@ import pandas as pd
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Create temporal dev/holdout split from raw Olist parquet files.")
+    parser = argparse.ArgumentParser(description="Create temporal dev/backtest/holdout split from raw Olist parquet files.")
     parser.add_argument("--input-dir", default="data/raw")
     parser.add_argument("--output-dir", default="data/splits/temporal_2018q4")
+    parser.add_argument("--backtest-start", default="2018-08-01")
+    parser.add_argument("--backtest-end", default="2018-08-31")
     parser.add_argument("--holdout-start", default="2018-08-01")
     parser.add_argument("--holdout-end", default="2018-10-31")
     parser.add_argument("--dev-end", default="2018-07-31")
@@ -29,14 +31,18 @@ def main() -> None:
     input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
 
+    backtest_start = pd.Timestamp(f"{args.backtest_start} 00:00:00")
+    backtest_end = pd.Timestamp(f"{args.backtest_end} 23:59:59")
     holdout_start = pd.Timestamp(f"{args.holdout_start} 00:00:00")
     holdout_end = pd.Timestamp(f"{args.holdout_end} 23:59:59")
     dev_end = pd.Timestamp(f"{args.dev_end} 23:59:59")
     exclude_holdout_customers = as_bool(args.exclude_holdout_customers_from_dev)
 
     dev_dir = output_dir / "dev"
+    backtest_dir = output_dir / "backtest"
     holdout_dir = output_dir / "holdout_3m"
     dev_dir.mkdir(parents=True, exist_ok=True)
+    backtest_dir.mkdir(parents=True, exist_ok=True)
     holdout_dir.mkdir(parents=True, exist_ok=True)
 
     orders = pd.read_parquet(input_dir / "olist_orders_dataset.parquet")
@@ -47,23 +53,44 @@ def main() -> None:
 
     orders["order_purchase_timestamp"] = pd.to_datetime(orders["order_purchase_timestamp"])
 
+    # Estructura temporal del proyecto:
+    # dev = historico hasta julio 2018
+    # backtest = agosto 2018
+    # holdout = agosto a octubre 2018 (compatibilidad historica / demo)
     orders_dev = orders[orders["order_purchase_timestamp"] <= dev_end].copy()
+    orders_backtest = orders[
+        (orders["order_purchase_timestamp"] >= backtest_start)
+        & (orders["order_purchase_timestamp"] <= backtest_end)
+    ].copy()
     orders_holdout = orders[
         (orders["order_purchase_timestamp"] >= holdout_start)
         & (orders["order_purchase_timestamp"] <= holdout_end)
     ].copy()
 
+    backtest_order_ids = set(orders_backtest["order_id"])
     holdout_order_ids = set(orders_holdout["order_id"])
     dev_order_ids = set(orders_dev["order_id"])
 
     items_dev = items[items["order_id"].isin(dev_order_ids)].copy()
+    items_backtest = items[items["order_id"].isin(backtest_order_ids)].copy()
     items_holdout = items[items["order_id"].isin(holdout_order_ids)].copy()
 
     payments_dev = payments[payments["order_id"].isin(dev_order_ids)].copy()
+    payments_backtest = payments[payments["order_id"].isin(backtest_order_ids)].copy()
     payments_holdout = payments[payments["order_id"].isin(holdout_order_ids)].copy()
 
     reviews_dev = reviews[reviews["order_id"].isin(dev_order_ids)].copy()
+    reviews_backtest = reviews[reviews["order_id"].isin(backtest_order_ids)].copy()
     reviews_holdout = reviews[reviews["order_id"].isin(holdout_order_ids)].copy()
+
+    orders_backtest_customers = orders_backtest[["order_id", "customer_id"]].merge(
+        customers[["customer_id", "customer_unique_id"]],
+        on="customer_id",
+        how="left",
+    )
+    backtest_customer_ids = (
+        orders_backtest_customers["customer_unique_id"].dropna().drop_duplicates().sort_values()
+    )
 
     orders_holdout_customers = orders_holdout[["order_id", "customer_id"]].merge(
         customers[["customer_id", "customer_unique_id"]],
@@ -75,6 +102,8 @@ def main() -> None:
     )
 
     if exclude_holdout_customers:
+        # Modo mas estricto: si un cliente aparece en holdout, se elimina por
+        # completo de dev para evitar compartir identidad entre ventanas.
         holdout_customer_id_set = set(holdout_customer_ids)
         orders_dev = orders_dev.merge(
             customers[["customer_id", "customer_unique_id"]],
@@ -89,14 +118,22 @@ def main() -> None:
         reviews_dev = reviews[reviews["order_id"].isin(dev_order_ids)].copy()
 
     orders_dev.to_parquet(dev_dir / "orders.parquet", index=False)
+    orders_backtest.to_parquet(backtest_dir / "orders.parquet", index=False)
     orders_holdout.to_parquet(holdout_dir / "orders.parquet", index=False)
     items_dev.to_parquet(dev_dir / "order_items.parquet", index=False)
+    items_backtest.to_parquet(backtest_dir / "order_items.parquet", index=False)
     items_holdout.to_parquet(holdout_dir / "order_items.parquet", index=False)
     payments_dev.to_parquet(dev_dir / "order_payments.parquet", index=False)
+    payments_backtest.to_parquet(backtest_dir / "order_payments.parquet", index=False)
     payments_holdout.to_parquet(holdout_dir / "order_payments.parquet", index=False)
     reviews_dev.to_parquet(dev_dir / "order_reviews.parquet", index=False)
+    reviews_backtest.to_parquet(backtest_dir / "order_reviews.parquet", index=False)
     reviews_holdout.to_parquet(holdout_dir / "order_reviews.parquet", index=False)
 
+    backtest_customer_ids.to_frame(name="customer_unique_id").to_parquet(
+        output_dir / "backtest_ids.parquet",
+        index=False,
+    )
     holdout_customer_ids.to_frame(name="customer_unique_id").to_parquet(
         output_dir / "holdout_3m_ids.parquet",
         index=False,
@@ -104,18 +141,25 @@ def main() -> None:
 
     metadata = {
         "run_timestamp": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "cutoff_start_backtest": args.backtest_start,
+        "cutoff_end_backtest": args.backtest_end,
         "cutoff_start_holdout": args.holdout_start,
         "cutoff_end_holdout": args.holdout_end,
         "dev_end_date": args.dev_end,
         "exclude_holdout_customers_from_dev": exclude_holdout_customers,
         "rows_orders_dev": int(len(orders_dev)),
+        "rows_orders_backtest": int(len(orders_backtest)),
         "rows_orders_holdout": int(len(orders_holdout)),
         "rows_items_dev": int(len(items_dev)),
+        "rows_items_backtest": int(len(items_backtest)),
         "rows_items_holdout": int(len(items_holdout)),
         "rows_payments_dev": int(len(payments_dev)),
+        "rows_payments_backtest": int(len(payments_backtest)),
         "rows_payments_holdout": int(len(payments_holdout)),
         "rows_reviews_dev": int(len(reviews_dev)),
+        "rows_reviews_backtest": int(len(reviews_backtest)),
         "rows_reviews_holdout": int(len(reviews_holdout)),
+        "customers_backtest": int(len(backtest_customer_ids)),
         "customers_holdout": int(len(holdout_customer_ids)),
     }
 
@@ -127,7 +171,9 @@ def main() -> None:
     print("Temporal split created:")
     print(f"- output_dir: {output_dir}")
     print(f"- orders_dev: {len(orders_dev)}")
+    print(f"- orders_backtest: {len(orders_backtest)}")
     print(f"- orders_holdout: {len(orders_holdout)}")
+    print(f"- backtest_customers: {len(backtest_customer_ids)}")
     print(f"- holdout_customers: {len(holdout_customer_ids)}")
 
 

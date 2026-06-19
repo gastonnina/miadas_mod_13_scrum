@@ -56,6 +56,10 @@ class BuildConfig:
         return self.project_root / "data" / "splits" / "temporal_2018q4" / "holdout_3m"
 
     @property
+    def split_backtest_dir(self) -> Path:
+        return self.project_root / "data" / "splits" / "temporal_2018q4" / "backtest"
+
+    @property
     def processed_dir(self) -> Path:
         return self.project_root / "data" / "processed"
 
@@ -64,8 +68,8 @@ class BuildConfig:
         return self.project_root / "data" / "interim"
 
     def validate(self) -> None:
-        if self.profile_source not in {"raw", "dev", "holdout"}:
-            raise ValueError("profile_source debe ser 'raw', 'dev' o 'holdout'")
+        if self.profile_source not in {"raw", "dev", "holdout", "backtest"}:
+            raise ValueError("profile_source debe ser 'raw', 'dev', 'backtest' o 'holdout'")
 
 
 def resolve_project_root() -> Path:
@@ -75,14 +79,17 @@ def resolve_project_root() -> Path:
 def load_dataset(config: BuildConfig, file_stem: str, force_raw: bool = False) -> pd.DataFrame:
     split_dirs = {
         "dev": config.split_dev_dir,
+        "backtest": config.split_backtest_dir,
         "holdout": config.split_holdout_dir,
     }
+    # Algunas tablas son transaccionales y deben salir del split temporal;
+    # otras son maestras de referencia y siempre se leen desde raw.
     source_dir = config.raw_dir if force_raw else (
         config.raw_dir if config.profile_source == "raw" else split_dirs[config.profile_source]
     )
 
     effective_stem = file_stem
-    if not force_raw and config.profile_source in {"dev", "holdout"}:
+    if not force_raw and config.profile_source in {"dev", "backtest", "holdout"}:
         effective_stem = SPLIT_NAME_MAP.get(file_stem, file_stem)
 
     parquet_path = source_dir / f"{effective_stem}.parquet"
@@ -166,6 +173,8 @@ def build_orders_enriched(datasets: dict[str, pd.DataFrame]) -> pd.DataFrame:
         .merge(order_reviews, on="order_id", how="left")
     )
 
+    # Enriquecemos cada orden con señales operativas que luego se agregaran
+    # a nivel cliente para construir el perfil final de modelado.
     orders_enriched["delivery_days"] = (
         orders_enriched["order_delivered_customer_date"] - orders_enriched["order_purchase_timestamp"]
     ).dt.days
@@ -270,12 +279,15 @@ def build_customer_geo(customers: pd.DataFrame) -> pd.DataFrame:
 def add_target(master_table: pd.DataFrame) -> tuple[pd.DataFrame, float]:
     threshold = float(master_table["total_spent"].quantile(0.80))
     result = master_table.copy()
+    # La regla de negocio define premium como el top 20% por gasto total.
     result["is_premium"] = np.where(result["total_spent"] >= threshold, 1, 0)
     return result, threshold
 
 
 def apply_fixed_target(master_table: pd.DataFrame, threshold: float) -> pd.DataFrame:
     result = master_table.copy()
+    # En holdout no recalculamos P80: reutilizamos el umbral de dev para
+    # mantener comparabilidad temporal y evitar leakage hacia el futuro.
     result["is_premium"] = np.where(result["total_spent"] >= threshold, 1, 0)
     return result
 
@@ -297,6 +309,8 @@ def build_master_table(
     )
 
     master_table_clean = master_table_raw.copy()
+    # Solo imputamos a cero columnas de conteo, tasas y montos agregados donde
+    # "sin actividad" es semanticamente equivalente a 0 en esta etapa.
     master_table_clean[FILL_ZERO_COLUMNS] = master_table_clean[FILL_ZERO_COLUMNS].fillna(0)
     if fixed_threshold is None:
         master_table_clean, threshold = add_target(master_table_clean)
@@ -437,7 +451,7 @@ def load_threshold_metadata(metadata_path: Path) -> dict[str, object]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Construye la master table del proyecto.")
-    parser.add_argument("--profile-source", default="dev", choices=["raw", "dev", "holdout"])
+    parser.add_argument("--profile-source", default="dev", choices=["raw", "dev", "backtest", "holdout"])
     parser.add_argument("--output-path", type=Path, default=None)
     parser.add_argument(
         "--raw-output-path",
@@ -470,7 +484,7 @@ def main() -> None:
     args = parse_args()
     config = BuildConfig(project_root=resolve_project_root(), profile_source=args.profile_source)
 
-    profile_prefix = {"raw": "raw", "dev": "dev", "holdout": "holdout"}.get(config.profile_source, config.profile_source)
+    profile_prefix = {"raw": "raw", "dev": "dev", "backtest": "backtest", "holdout": "holdout"}.get(config.profile_source, config.profile_source)
     raw_output_path = args.raw_output_path or (config.interim_dir / f"01_master_table_raw_{profile_prefix}.parquet")
     clean_output_path = args.output_path or (
         config.processed_dir / f"03_master_table_clean_{profile_prefix}.parquet"
@@ -488,6 +502,7 @@ def main() -> None:
     if args.threshold_mode in {"apply", "auto"} and threshold_metadata_path.exists():
         metadata = load_threshold_metadata(threshold_metadata_path)
         fixed_threshold = float(metadata["premium_threshold"])
+        # auto se comporta como apply si ya existe un umbral persistido.
         if args.threshold_mode == "auto":
             threshold_mode_used = "apply"
     elif args.threshold_mode == "apply":
@@ -495,6 +510,7 @@ def main() -> None:
             f"No existe metadata de umbral en {threshold_metadata_path} para usar threshold-mode=apply"
         )
     elif args.threshold_mode == "auto":
+        # Si no existe metadata previa, auto cae a fit y genera el umbral.
         threshold_mode_used = "fit"
 
     master_table_raw, master_table_clean, threshold = build_master_table(
@@ -514,13 +530,14 @@ def main() -> None:
         "holdout": "data/splits/temporal_2018q4/holdout_3m",
         "raw": "data/raw",
     }
-    save_threshold_metadata(
-        threshold,
-        threshold_metadata_path,
-        profile_source=config.profile_source,
-        reference_population=reference_population_map.get(config.profile_source, "data/raw"),
-        mode=threshold_mode_used,
-    )
+    if threshold_mode_used == "fit":
+        save_threshold_metadata(
+            threshold,
+            threshold_metadata_path,
+            profile_source=config.profile_source,
+            reference_population=reference_population_map.get(config.profile_source, "data/raw"),
+            mode=threshold_mode_used,
+        )
 
     print(f"Profile source: {config.profile_source}")
     print(f"Premium threshold: {threshold:.2f}")
@@ -529,7 +546,10 @@ def main() -> None:
     print(f"Clean master table saved to: {clean_output_path}")
     print(f"Compatibility master table saved to: {compatibility_output_path}")
     print(f"Profile markdown saved to: {profile_output_path}")
-    print(f"Threshold metadata saved to: {threshold_metadata_path}")
+    if threshold_mode_used == "fit":
+        print(f"Threshold metadata saved to: {threshold_metadata_path}")
+    else:
+        print(f"Threshold metadata reused from: {threshold_metadata_path}")
     print("Raw validation:", raw_validation)
     print("Clean validation:", clean_validation)
 

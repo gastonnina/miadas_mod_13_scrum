@@ -1,5 +1,5 @@
 {
-  "input_path": "/var/www/codigo/maestria_ia/umsa/mod_13/miadas_mod_13_scrum/data/processed/05_features_rfm.parquet",
+  "input_path": "/home/gerick/Documents/MIADAS/miadas_mod_13_scrum/data/processed/05_features_rfm.parquet",
   "validation_cutoff": "2018-07-01",
   "max_train_rows": 30000,
   "base_feature_count": 37,

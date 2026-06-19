@@ -1,8 +1,8 @@
 {
   "source": "src/features/feature_selection_experiments.py",
   "selection_type": "experimental",
-  "input_path": "/var/www/codigo/maestria_ia/umsa/mod_13/miadas_mod_13_scrum/data/processed/05_features_rfm.parquet",
-  "selected_output_path": "/var/www/codigo/maestria_ia/umsa/mod_13/miadas_mod_13_scrum/data/processed/06_features_selected.parquet",
+  "input_path": "/home/gerick/Documents/MIADAS/miadas_mod_13_scrum/data/processed/05_features_rfm.parquet",
+  "selected_output_path": "/home/gerick/Documents/MIADAS/miadas_mod_13_scrum/data/processed/06_features_selected.parquet",
   "validation_cutoff": "2018-07-01",
   "max_train_rows": 30000,
   "best_experiment": "corr_le_0.85",

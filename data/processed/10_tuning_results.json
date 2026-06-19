@@ -1,0 +1,84 @@
+{
+  "sprint": 3,
+  "tasks": [
+    "S3-DS-03",
+    "S3-DS-04"
+  ],
+  "n_trials": 50,
+  "winner": {
+    "model": "LightGBM (tuneado)",
+    "type": "lgbm",
+    "params": {
+      "num_leaves": 59,
+      "max_depth": 8,
+      "learning_rate": 0.054038945566405934,
+      "n_estimators": 255,
+      "min_child_samples": 68,
+      "subsample": 0.9059228577785707,
+      "colsample_bytree": 0.855428530082444,
+      "reg_alpha": 6.735979730583029e-08,
+      "reg_lambda": 0.0005641632739363156
+    },
+    "val_metrics": {
+      "roc_auc": 0.8081173606576944,
+      "gini": 0.616235,
+      "pr_auc": 0.6009838294028759,
+      "f1": 0.5576296296296296,
+      "precision": 0.48182283666154635,
+      "recall": 0.6617440225035162
+    },
+    "overfit_gap": 0.0385
+  },
+  "runner_up": {
+    "model": "XGBoost (tuneado)",
+    "val_metrics": {
+      "roc_auc": 0.8070129250124616,
+      "gini": 0.614026,
+      "pr_auc": 0.5996806712972317,
+      "f1": 0.555998772629641,
+      "precision": 0.49319542732716387,
+      "recall": 0.6371308016877637
+    }
+  },
+  "comparison": [
+    {
+      "Modelo": "LightGBM baseline",
+      "ROC-AUC val": 0.803485,
+      "Gini val": 0.60697,
+      "F1 val": 0.556471,
+      "Recall val": 0.66526,
+      "Gap overfit": 0.037
+    },
+    {
+      "Modelo": "LightGBM tuneado",
+      "ROC-AUC val": 0.8081173606576944,
+      "Gini val": 0.616235,
+      "F1 val": 0.5576296296296296,
+      "Recall val": 0.6617440225035162,
+      "Gap overfit": 0.0385
+    },
+    {
+      "Modelo": "XGBoost baseline",
+      "ROC-AUC val": 0.798211,
+      "Gini val": 0.596423,
+      "F1 val": 0.550448,
+      "Recall val": 0.690577,
+      "Gap overfit": 0.029
+    },
+    {
+      "Modelo": "XGBoost tuneado",
+      "ROC-AUC val": 0.8070129250124616,
+      "Gini val": 0.614026,
+      "F1 val": 0.555998772629641,
+      "Recall val": 0.6371308016877637,
+      "Gap overfit": 0.0525
+    }
+  ],
+  "best_threshold": {
+    "value": 0.55,
+    "f1": 0.5603392041748206,
+    "precision": 0.5225060827250608,
+    "recall": 0.6040787623066104
+  },
+  "model_path": "C:\\Users\\marce\\Documents\\Code\\Maestria\\m13\\miadas_mod_13_scrum\\models\\final\\modelo_final.pkl"
+}

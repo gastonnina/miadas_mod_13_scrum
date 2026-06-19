@@ -1,0 +1,266 @@
+{
+  "validation_cutoff": "2018-07-01",
+  "train_rows": 83589,
+  "validation_rows": 6230,
+  "feature_count": 28,
+  "features": [
+    "total_orders",
+    "total_items",
+    "total_products",
+    "avg_review_score",
+    "avg_delivery_days",
+    "avg_estimated_delivery_days",
+    "delivered_orders",
+    "late_deliveries",
+    "payment_methods_count",
+    "max_payment_installments",
+    "recency_days",
+    "customer_lifetime_days",
+    "cancellation_rate",
+    "products_per_order",
+    "max_to_avg_price_ratio",
+    "installments_gt_1_flag",
+    "installments_gt_6_flag",
+    "credit_card_flag",
+    "voucher_flag",
+    "delivery_gap",
+    "reviews_per_order",
+    "far_region_flag",
+    "top_category_is_high_value",
+    "customer_state",
+    "main_payment_type",
+    "top_category",
+    "region_group",
+    "top_category_group"
+  ],
+  "results": [
+    {
+      "model_name": "xgboost",
+      "scale_numeric": false,
+      "train_metrics": {
+        "precision": 0.4499242319878771,
+        "recall": 0.734015057871671,
+        "f1": 0.5578852970064483,
+        "roc_auc": 0.8272261058259709,
+        "gini": 0.6544522116519418,
+        "confusion_matrix": [
+          [
+            49819,
+            15972
+          ],
+          [
+            4734,
+            13064
+          ]
+        ]
+      },
+      "validation_metrics": {
+        "precision": 0.47093023255813954,
+        "recall": 0.6835443037974683,
+        "f1": 0.5576592082616179,
+        "roc_auc": 0.7977877207701183,
+        "gini": 0.5955754415402366,
+        "confusion_matrix": [
+          [
+            3716,
+            1092
+          ],
+          [
+            450,
+            972
+          ]
+        ]
+      }
+    },
+    {
+      "model_name": "random_forest",
+      "scale_numeric": false,
+      "train_metrics": {
+        "precision": 0.4543298179031493,
+        "recall": 0.699516799640409,
+        "f1": 0.5508727683015863,
+        "roc_auc": 0.8107356806276809,
+        "gini": 0.6214713612553617,
+        "confusion_matrix": [
+          [
+            50838,
+            14953
+          ],
+          [
+            5348,
+            12450
+          ]
+        ]
+      },
+      "validation_metrics": {
+        "precision": 0.47657082002129925,
+        "recall": 0.629395218002813,
+        "f1": 0.5424242424242425,
+        "roc_auc": 0.7929175120696635,
+        "gini": 0.5858350241393271,
+        "confusion_matrix": [
+          [
+            3825,
+            983
+          ],
+          [
+            527,
+            895
+          ]
+        ]
+      }
+    },
+    {
+      "model_name": "logistic_regression",
+      "scale_numeric": true,
+      "train_metrics": {
+        "precision": 0.44372677082957457,
+        "recall": 0.6909203281267559,
+        "f1": 0.5403968271406913,
+        "roc_auc": 0.8040760424130045,
+        "gini": 0.6081520848260089,
+        "confusion_matrix": [
+          [
+            50375,
+            15416
+          ],
+          [
+            5501,
+            12297
+          ]
+        ]
+      },
+      "validation_metrics": {
+        "precision": 0.4527928818586258,
+        "recall": 0.6441631504922645,
+        "f1": 0.5317851959361394,
+        "roc_auc": 0.788422322968517,
+        "gini": 0.576844645937034,
+        "confusion_matrix": [
+          [
+            3701,
+            1107
+          ],
+          [
+            506,
+            916
+          ]
+        ]
+      }
+    },
+    {
+      "model_name": "svm_linear",
+      "scale_numeric": true,
+      "train_metrics": {
+        "precision": 0.6702397418165053,
+        "recall": 0.3267221036071469,
+        "f1": 0.4392989348039586,
+        "roc_auc": 0.8038806315515483,
+        "gini": 0.6077612631030966,
+        "confusion_matrix": [
+          [
+            62930,
+            2861
+          ],
+          [
+            11983,
+            5815
+          ]
+        ]
+      },
+      "validation_metrics": {
+        "precision": 0.6789915966386555,
+        "recall": 0.2841068917018284,
+        "f1": 0.40059494298463066,
+        "roc_auc": 0.7871855188609701,
+        "gini": 0.5743710377219402,
+        "confusion_matrix": [
+          [
+            4617,
+            191
+          ],
+          [
+            1018,
+            404
+          ]
+        ]
+      }
+    },
+    {
+      "model_name": "decision_tree",
+      "scale_numeric": false,
+      "train_metrics": {
+        "precision": 0.4357919872645264,
+        "recall": 0.7382852005843353,
+        "f1": 0.5480709071949947,
+        "roc_auc": 0.8129014305396038,
+        "gini": 0.6258028610792077,
+        "confusion_matrix": [
+          [
+            48779,
+            17012
+          ],
+          [
+            4658,
+            13140
+          ]
+        ]
+      },
+      "validation_metrics": {
+        "precision": 0.44489981785063754,
+        "recall": 0.6870604781997187,
+        "f1": 0.5400773908236595,
+        "roc_auc": 0.7783974230712526,
+        "gini": 0.5567948461425052,
+        "confusion_matrix": [
+          [
+            3589,
+            1219
+          ],
+          [
+            445,
+            977
+          ]
+        ]
+      }
+    },
+    {
+      "model_name": "extra_trees",
+      "scale_numeric": false,
+      "train_metrics": {
+        "precision": 0.4414225156619275,
+        "recall": 0.6611417013147545,
+        "f1": 0.5293892700483636,
+        "roc_auc": 0.7929704501245503,
+        "gini": 0.5859409002491005,
+        "confusion_matrix": [
+          [
+            50901,
+            14890
+          ],
+          [
+            6031,
+            11767
+          ]
+        ]
+      },
+      "validation_metrics": {
+        "precision": 0.44293614881850174,
+        "recall": 0.6195499296765119,
+        "f1": 0.5165640574611551,
+        "roc_auc": 0.7708383062921385,
+        "gini": 0.5416766125842769,
+        "confusion_matrix": [
+          [
+            3700,
+            1108
+          ],
+          [
+            541,
+            881
+          ]
+        ]
+      }
+    }
+  ]
+}
