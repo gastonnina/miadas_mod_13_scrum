@@ -193,40 +193,40 @@ ROI & -89.57\% & +250.40\% \\
 \end{table}
 
 \subsection{Lift y capacidad de priorización del ranking}
-Además del umbral operativo, el docente solicitó validar la capacidad del score como ranking comercial. Para ello, ordenamos el backtest por probabilidad predicha descendente y lo dividimos en \textbf{10 deciles del mismo tamaño}. En cada decil medimos cuántos clientes premium reales aparecen, cuántos se acumulan y cuál es el \textit{lift} respecto a una selección aleatoria.
+Además del umbral operativo, el docente solicitó validar la capacidad del score como ranking comercial. Para esta lectura usamos solo los \textbf{clientes activos en agosto de 2018} (\texttt{total\_orders > 0}), con el fin de evaluar la priorización sobre la población realmente operativa de la ventana backtest. Luego ordenamos esos clientes por probabilidad predicha descendente y los dividimos en \textbf{10 deciles del mismo tamaño}. En cada decil medimos cuántos clientes premium reales aparecen, cuántos se acumulan y cuál es el \textit{lift} respecto a una selección aleatoria.
 
 Esta lectura es especialmente valiosa para negocio porque responde una pregunta distinta a la de Precision/Recall: \textit{si solo priorizamos el 10\%, 20\% o 30\% de la base con mayor score, qué proporción del segmento premium logramos capturar?}
 
 \begin{table}[h]
 \centering
-\caption{Tabla de Deciles Lift/Gain sobre Backtest}
+\caption{Tabla de Deciles Lift/Gain sobre Clientes Activos de Agosto 2018}
 \label{tab:lift_gain_backtest}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{rrrrrrrr}
 \toprule
 Decil & Casos & Premium & \% premium decil & Premium acum. & Gain acum. (\%) & Lift & Lift acum. \\
 \midrule
-1 & 9,609 & 1,253 & 13.04 & 1,253 & 100.00 & 10.00 & 10.00 \\
-2 & 9,610 & 0 & 0.00 & 1,253 & 100.00 & 0.00 & 5.00 \\
-3 & 9,609 & 0 & 0.00 & 1,253 & 100.00 & 0.00 & 3.33 \\
-4 & 9,610 & 0 & 0.00 & 1,253 & 100.00 & 0.00 & 2.50 \\
-5 & 9,610 & 0 & 0.00 & 1,253 & 100.00 & 0.00 & 2.00 \\
-6 & 9,609 & 0 & 0.00 & 1,253 & 100.00 & 0.00 & 1.67 \\
-7 & 9,610 & 0 & 0.00 & 1,253 & 100.00 & 0.00 & 1.43 \\
-8 & 9,609 & 0 & 0.00 & 1,253 & 100.00 & 0.00 & 1.25 \\
-9 & 9,610 & 0 & 0.00 & 1,253 & 100.00 & 0.00 & 1.11 \\
-10 & 9,610 & 0 & 0.00 & 1,253 & 100.00 & 0.00 & 1.00 \\
+1 & 646 & 405 & 62.69 & 405 & 32.32 & 3.23 & 3.23 \\
+2 & 646 & 216 & 33.44 & 621 & 49.56 & 1.72 & 2.48 \\
+3 & 646 & 167 & 25.85 & 788 & 62.89 & 1.33 & 2.10 \\
+4 & 646 & 109 & 16.87 & 897 & 71.59 & 0.87 & 1.79 \\
+5 & 646 & 91 & 14.09 & 988 & 78.85 & 0.73 & 1.58 \\
+6 & 646 & 89 & 13.78 & 1,077 & 85.95 & 0.71 & 1.43 \\
+7 & 646 & 62 & 9.60 & 1,139 & 90.90 & 0.49 & 1.30 \\
+8 & 646 & 62 & 9.60 & 1,201 & 95.85 & 0.49 & 1.20 \\
+9 & 646 & 37 & 5.73 & 1,238 & 98.80 & 0.30 & 1.10 \\
+10 & 646 & 15 & 2.32 & 1,253 & 100.00 & 0.12 & 1.00 \\
 \bottomrule
 \end{tabular}%
 }
 \end{table}
 
-Los resultados muestran una concentración extrema del valor al inicio del ranking: el \textbf{primer decil} ya captura \textbf{100\%} de todos los premium reales del backtest y opera con un \textbf{lift de 10.00x}. Sin embargo, esto \textbf{no} significa que ese primer decil sea 100\% premium. En realidad, la tasa premium dentro del decil 1 es de \textbf{13.04\%}, frente a una tasa base total de apenas \textbf{1.30\%}. Es decir, el ranking multiplica por diez la densidad esperada de premium en el tramo más alto del score. A partir del segundo decil ya no aparecen nuevos premium reales. Esta evidencia es consistente con el ROC-AUC extraordinariamente alto del backtest y refuerza que el score no solo clasifica bien, sino que \textbf{ordena de manera muy agresiva la base para una campaña priorizada}. Al mismo tiempo, esta forma tan abrupta del ranking también confirma que agosto de 2018 es un escenario \textbf{mucho más fácil y separable} que la validación metodológica de Sprint 3.
+Los resultados muestran una priorización fuerte pero más realista sobre la población activa. Entre \textbf{6,460 clientes activos} y \textbf{1,253 premium reales}, el \textbf{primer decil} captura \textbf{32.32\%} de todos los premium y alcanza una tasa premium interna de \textbf{62.69\%}, frente a una tasa base de \textbf{19.40\%}. Esto equivale a un \textbf{lift de 3.23x} en el tramo más alto del ranking. Al ampliar la cobertura al \textbf{20\%} superior de clientes activos, el modelo ya captura \textbf{49.56\%} de los premium reales. La conclusión es más defendible para negocio: el score no es perfecto, pero \textbf{sí ordena de forma útil a los clientes activos}, concentrando una fracción sustantiva del valor comercial en los primeros deciles.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\columnwidth]{sprint_04_backtest_gain_lift.png}
-  \caption{Responses por decil y curvas acumuladas de gain/lift sobre el backtest oficial. Se observa que todos los premium reales del backtest quedan contenidos en el primer decil, aunque dicho decil no sea 100\% premium.}
+  \includegraphics[width=\columnwidth]{sprint_04_backtest_gain_lift_active_august.png}
+  \caption{Responses por decil y curvas acumuladas de gain/lift sobre clientes activos en agosto de 2018. El ranking concentra una porción importante de premium reales en los primeros deciles sin caer en la separación extrema observada sobre la base completa.}
   \label{fig:gain_lift_backtest}
 \end{figure}
 

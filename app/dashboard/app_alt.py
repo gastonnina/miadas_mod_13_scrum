@@ -476,9 +476,11 @@ def build_lift_table(_pipeline, df: pd.DataFrame, selected_cols: list[str]) -> p
     scored = pd.DataFrame(
         {
             "is_premium": df["is_premium"].astype(int),
+            "total_orders": df["total_orders"].fillna(0),
             "prob": _pipeline.predict_proba(df[selected_cols])[:, 1],
         }
-    ).sort_values("prob", ascending=False, kind="mergesort").reset_index(drop=True)
+    )
+    scored = scored[scored["total_orders"] > 0].sort_values("prob", ascending=False, kind="mergesort").reset_index(drop=True)
 
     n_rows = len(scored)
     scored["decile"] = (
@@ -510,6 +512,9 @@ def build_lift_table(_pipeline, df: pd.DataFrame, selected_cols: list[str]) -> p
     lift_table["gain_pct"] = lift_table["cum_events_pct"] * 100
     lift_table["lift"] = lift_table["response_rate"] / base_rate
     lift_table["cum_lift"] = lift_table["cum_events_pct"] / lift_table["cum_cases_pct"]
+    lift_table.attrs["base_rate"] = float(base_rate)
+    lift_table.attrs["n_rows"] = int(n_rows)
+    lift_table.attrs["total_events"] = int(total_events)
     return lift_table
 
 
@@ -723,9 +728,9 @@ def render_lift_charts(lift_table: pd.DataFrame) -> None:
         rows=3, cols=1,
         shared_xaxes=False,
         subplot_titles=[
-            "Respuestas por decil",
-            "Curva de ganancia acumulada",
-            "Lift acumulado",
+            "Respuestas por decil - clientes activos",
+            "Curva de ganancia acumulada - clientes activos",
+            "Lift acumulado - clientes activos",
         ],
         vertical_spacing=0.09,
     )
@@ -793,7 +798,7 @@ def render_lift_charts(lift_table: pd.DataFrame) -> None:
     for r in range(1, 4):
         fig.update_xaxes(row=r, col=1, **_AX)
         fig.update_yaxes(row=r, col=1, **_AX)
-    fig.update_xaxes(title_text="% de la base priorizada", row=3, col=1, title_font=dict(size=10, color=COLOR_MUTED))
+    fig.update_xaxes(title_text="% de la base activa priorizada", row=3, col=1, title_font=dict(size=10, color=COLOR_MUTED))
     fig.update_yaxes(title_text="Premium reales", row=1, col=1, title_font=dict(size=10, color=COLOR_MUTED))
     fig.update_yaxes(title_text="% premium acumulado", row=2, col=1, title_font=dict(size=10, color=COLOR_MUTED))
     fig.update_yaxes(title_text="Lift", row=3, col=1, title_font=dict(size=10, color=COLOR_MUTED))
@@ -1191,18 +1196,20 @@ def main() -> None:
 
             lift_table = build_lift_table(pipeline, df, selected_cols)
             top10 = lift_table.iloc[0]
+            base_rate = lift_table.attrs.get("base_rate", 0.0)
+            n_active = lift_table.attrs.get("n_rows", 0)
+            total_events = lift_table.attrs.get("total_events", 0)
 
             lg1, lg2, lg3 = st.columns(3)
-            lg1.metric("Top 10% captura",      f"{top10['cum_events_pct']:.1%}", delta="de todos los premium reales")
-            lg2.metric("Tasa premium decil 1",  f"{top10['premium_rate_pct']:.1f}%", delta="vs base 1.3%")
-            lg3.metric("Lift acumulado decil 1", f"{top10['lift']:.2f}x", delta="vs selección aleatoria")
+            lg1.metric("Top 10% activos captura", f"{top10['cum_events_pct']:.1%}", delta="de los premium reales activos")
+            lg2.metric("Tasa premium decil 1",    f"{top10['premium_rate_pct']:.1f}%", delta=f"vs base {base_rate:.1%}")
+            lg3.metric("Lift acumulado decil 1",  f"{top10['lift']:.2f}x", delta="vs selección aleatoria")
 
             narrative(
-                "Lectura correcta del primer decil",
-                f"El primer decil no es 100% premium — su tasa es ~{top10['premium_rate_pct']:.0f}%. "
-                "Pero concentra la mayoría de los premium reales: "
-                f"captura {top10['cum_events_pct']:.0%} de todos ellos seleccionando sólo el 10% de la base. "
-                "Eso es el lift en acción.",
+                "Lectura correcta sobre clientes activos",
+                f"En agosto analizamos {n_active:,} clientes activos, con {total_events:,} premium reales. "
+                f"El primer decil alcanza una tasa premium de ~{top10['premium_rate_pct']:.0f}% "
+                f"y captura {top10['cum_events_pct']:.0%} de los premium reales seleccionando solo el 10% de la base activa.",
                 color="green",
             )
 
