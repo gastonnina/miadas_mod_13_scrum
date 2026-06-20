@@ -490,7 +490,7 @@ def main() -> None:
             st.write("- Umbral operativo adoptado: 0.55.")
         with c2:
             st.markdown("**Por que importa**")
-            st.write("- Evita leer el holdout como mejora milagrosa.")
+            st.write("- Reduce la sobreinterpretacion del resultado en holdout.")
             st.write("- Separa validez metodologica de demostracion operativa.")
             st.write("- Da contexto a la metrica alta del holdout.")
 

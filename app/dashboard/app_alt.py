@@ -1082,7 +1082,7 @@ def main() -> None:
             st.write("- Umbral operativo calibrado a 0.55 sobre validación")
         with c2:
             st.markdown("**Por qué importa la separación**")
-            st.write("- Evita leer holdout como 'mejora milagrosa'")
+            st.write("- Aporta contexto al resultado observado en holdout")
             st.write("- Separa validez metodológica de demostración operativa")
             st.write("- Permite juzgar generalización temporal real")
 
