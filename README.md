@@ -157,6 +157,7 @@ Sprint 4 (`integracion y demo`):
 - Pitch de Demo Day: [reports/sprint_04/pitch_demo_day.md](reports/sprint_04/pitch_demo_day.md)
 - Informe etico y de gobernanza: [reports/sprint_04/informe_etico_gobernanza.md](reports/sprint_04/informe_etico_gobernanza.md)
 - Reporte Sprint 4 (LaTeX/PDF): [reports/sprint_04/informes/sprint_04_reporte.pdf](reports/sprint_04/informes/sprint_04_reporte.pdf)
+- Presentacion Sprint 4 (PDF): [reports/sprint_04/informes/sprint_04_presentacion.pdf](reports/sprint_04/informes/sprint_04_presentacion.pdf)
 
 ## 🚀 Scripts de ejecucion
 
